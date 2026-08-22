@@ -1,0 +1,43 @@
+{
+  "frozen_at": "2026-08-22T17:47:00.192203+00:00",
+  "frozen_by": "freeze_datasets.py",
+  "note": "Held-out files are frozen after this timestamp. Any modification invalidates results (EDD \u00a73.3, \u00a78.1).",
+  "files": {
+    "p2p_held_out.json": {
+      "file": "p2p_held_out.json",
+      "record_count": 35,
+      "dataset_type": "held_out",
+      "checksum": "e42295d2f02e989037288be30f712fbfd181d7c4b4dadb2f8cbc0d57211e44dc"
+    },
+    "p2p_adversarial.json": {
+      "file": "p2p_adversarial.json",
+      "record_count": 12,
+      "dataset_type": "adversarial",
+      "checksum": "4f8792a9baa8dccb67d7b54f75deb9ebf31a9716341427421766ec2985bf375e"
+    },
+    "p2p_dev.json": {
+      "file": "p2p_dev.json",
+      "record_count": 15,
+      "dataset_type": "dev",
+      "checksum": "46001405d8cc8f0a7125d9ccf4854dcd58205e053cc238ef134727edd27733c2"
+    },
+    "payment_failure_held_out.json": {
+      "file": "payment_failure_held_out.json",
+      "record_count": 35,
+      "dataset_type": "held_out",
+      "checksum": "85626a71b79ca845bccd7ede1e7ce5aa4efa2fc65c7a69554e9d2e88d8f2f101"
+    },
+    "payment_failure_adversarial.json": {
+      "file": "payment_failure_adversarial.json",
+      "record_count": 12,
+      "dataset_type": "adversarial",
+      "checksum": "cad24040ee69143209b19956ecc0da09cce05ba780ca3b1ac7dc22e7d9ef60d8"
+    },
+    "payment_failure_dev.json": {
+      "file": "payment_failure_dev.json",
+      "record_count": 15,
+      "dataset_type": "dev",
+      "checksum": "7891ac507a5855493c6c775f02e0f89bedf02bc740329cfe3c1dcb81c526ca22"
+    }
+  }
+}

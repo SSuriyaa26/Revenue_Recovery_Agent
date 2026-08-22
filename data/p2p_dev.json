@@ -1,0 +1,227 @@
+[
+  {
+    "invoice_id": "INV-DEV-001",
+    "merchant_id": "MERCH-001",
+    "buyer_id": "BUY-001",
+    "original_amount": 50000,
+    "due_date": "2026-08-20",
+    "input_type": "text",
+    "raw_input": "Bhaiya, kal tak 50 hazaar de dunga pakka. Wednesday tak factory se payment nikalwa dunga.",
+    "ground_truth": {
+      "committed_amount": 50000,
+      "split_pct": null,
+      "committed_date": "2026-08-26",
+      "eventual_outcome": "paid_full"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-002",
+    "merchant_id": "MERCH-001",
+    "buyer_id": "BUY-002",
+    "original_amount": 120000,
+    "due_date": "2026-08-18",
+    "input_type": "voice_transcript",
+    "raw_input": "Haan bhai, abhi mal rasta me hai. 1.2 lakh Wednesday tak factory se payment nikalwa dunga guaranteed.",
+    "ground_truth": {
+      "committed_amount": 120000,
+      "split_pct": null,
+      "committed_date": "2026-08-26",
+      "eventual_outcome": "paid_full"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-003",
+    "merchant_id": "MERCH-002",
+    "buyer_id": "BUY-003",
+    "original_amount": 75000,
+    "due_date": "2026-08-15",
+    "input_type": "text",
+    "raw_input": "Abhi 50% de deta hoon, baaki next month first week me. 37500 abhi bhej do link.",
+    "ground_truth": {
+      "committed_amount": 37500,
+      "split_pct": 50,
+      "committed_date": "2026-09-05",
+      "eventual_outcome": "paid_partial"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-004",
+    "merchant_id": "MERCH-002",
+    "buyer_id": "BUY-004",
+    "original_amount": 200000,
+    "due_date": "2026-08-10",
+    "input_type": "voice_transcript",
+    "raw_input": "Dekho bhai, 2 lakh ek saath nahi hoga. 60% abhi, 40% agle mahine. Total milega don't worry.",
+    "ground_truth": {
+      "committed_amount": 120000,
+      "split_pct": 60,
+      "committed_date": "2026-09-10",
+      "eventual_outcome": "paid_full"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-005",
+    "merchant_id": "MERCH-001",
+    "buyer_id": "BUY-005",
+    "original_amount": 30000,
+    "due_date": "2026-08-22",
+    "input_type": "text",
+    "raw_input": "Monday tak... ya phir... haan Monday, no wait Tuesday. Actually agle hafte kisi din de dunga.",
+    "ground_truth": {
+      "committed_amount": 30000,
+      "split_pct": null,
+      "committed_date": null,
+      "eventual_outcome": "never_extracted_intent"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-006",
+    "merchant_id": "MERCH-003",
+    "buyer_id": "BUY-006",
+    "original_amount": 85000,
+    "due_date": "2026-08-12",
+    "input_type": "voice_transcript",
+    "raw_input": "5000 bhej do... nahi nahi 8000... actually 85000 pura hi de deta hoon Friday tak.",
+    "ground_truth": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "eventual_outcome": "never_extracted_intent"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-007",
+    "merchant_id": "MERCH-003",
+    "buyer_id": "BUY-007",
+    "original_amount": 45000,
+    "due_date": "2026-08-19",
+    "input_type": "text",
+    "raw_input": "Abhi cash flow tight hai yaar. Kuch nahi de sakta abhi. Baad me dekhte hain.",
+    "ground_truth": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "eventual_outcome": "never_extracted_intent"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-008",
+    "merchant_id": "MERCH-001",
+    "buyer_id": "BUY-008",
+    "original_amount": 60000,
+    "due_date": "2026-08-14",
+    "input_type": "text",
+    "raw_input": "25 August tak de dunga bhai. Pura 60000. Lekin agar nahi hua toh 1 September tak zaroor.",
+    "ground_truth": {
+      "committed_amount": 60000,
+      "split_pct": null,
+      "committed_date": "2026-08-25",
+      "eventual_outcome": "broken_promise_then_paid"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-009",
+    "merchant_id": "MERCH-002",
+    "buyer_id": "BUY-009",
+    "original_amount": 150000,
+    "due_date": "2026-08-08",
+    "input_type": "voice_transcript",
+    "raw_input": "Arre bhai, Thursday tak payment aa jayega. Pakka. Mera word hai. 1.5 lakh poora.",
+    "ground_truth": {
+      "committed_amount": 150000,
+      "split_pct": null,
+      "committed_date": "2026-08-13",
+      "eventual_outcome": "broken_promise_then_escalated"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-010",
+    "merchant_id": "MERCH-004",
+    "buyer_id": "BUY-010",
+    "original_amount": 95000,
+    "due_date": "2026-08-16",
+    "input_type": "text",
+    "raw_input": "Haan theek hai, 95000 Friday tak bhej dunga. Payment link bhejo na.",
+    "ground_truth": {
+      "committed_amount": 95000,
+      "split_pct": null,
+      "committed_date": "2026-08-28",
+      "eventual_outcome": "paid_full"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-011",
+    "merchant_id": "MERCH-004",
+    "buyer_id": "BUY-011",
+    "original_amount": 40000,
+    "due_date": "2026-08-20",
+    "input_type": "voice_transcript",
+    "raw_input": "Bhai salary aane do 1 tarikh ko, phir turant bhej dunga 40 hazaar.",
+    "ground_truth": {
+      "committed_amount": 40000,
+      "split_pct": null,
+      "committed_date": "2026-09-01",
+      "eventual_outcome": "paid_full"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-012",
+    "merchant_id": "MERCH-005",
+    "buyer_id": "BUY-012",
+    "original_amount": 180000,
+    "due_date": "2026-08-05",
+    "input_type": "text",
+    "raw_input": "70% abhi de deta hoon, rest 30% 2 hafte me. 126000 ka link bhejo.",
+    "ground_truth": {
+      "committed_amount": 126000,
+      "split_pct": 70,
+      "committed_date": "2026-09-02",
+      "eventual_outcome": "paid_partial"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-013",
+    "merchant_id": "MERCH-005",
+    "buyer_id": "BUY-013",
+    "original_amount": 55000,
+    "due_date": "2026-08-18",
+    "input_type": "voice_transcript",
+    "raw_input": "Friday tak payment karunga. Agar nahi hua toh next Monday pakka. 55 hazaar pura.",
+    "ground_truth": {
+      "committed_amount": 55000,
+      "split_pct": null,
+      "committed_date": "2026-08-28",
+      "eventual_outcome": "broken_promise_then_paid"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-014",
+    "merchant_id": "MERCH-001",
+    "buyer_id": "BUY-014",
+    "original_amount": 300000,
+    "due_date": "2026-08-01",
+    "input_type": "text",
+    "raw_input": "3 lakh toh bahut zyada hai bhai ek baar me. 80% discount de do toh abhi de deta hoon.",
+    "ground_truth": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "eventual_outcome": "broken_promise_then_escalated"
+    }
+  },
+  {
+    "invoice_id": "INV-DEV-015",
+    "merchant_id": "MERCH-003",
+    "buyer_id": "BUY-015",
+    "original_amount": 22000,
+    "due_date": "2026-08-25",
+    "input_type": "text",
+    "raw_input": "22000 de dunga Monday ko. Payment link bhej do please.",
+    "ground_truth": {
+      "committed_amount": 22000,
+      "split_pct": null,
+      "committed_date": "2026-08-31",
+      "eventual_outcome": "paid_full"
+    }
+  }
+]
