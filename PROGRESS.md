@@ -146,6 +146,25 @@ Hackathon submissions are scored across 4 core categories:
 
 ## 9. Tomorrow's Focus & Action Plan
 
-1. **P2P Exception Rate Calibration Review**: Manually inspect the 18 P2P exceptions in `data/evaluation_latest.json` to confirm whether the 0.60 confidence threshold is appropriately filtering genuine ambiguities vs over-rejecting recoverable intent.
-2. **Real-Voice Date Parsing Retest**: Record 3-4 real human voice samples for day+तक combinations ('Wednesday tak') to validate Saaras v3 + Gemini date extraction without TTS boundary artifacts.
-3. **Step 12: Merchant Dashboard / Judge Evaluation View**: Build the interactive presentation UI showing live recovery metrics, active P2P cases, payment link statuses, and the auditable decision trail.
+### Kickoff Sequence (Day 5 Morning)
+
+1. **P2P Exception Rate Calibration Review (10–15 mins)**:
+   - Inspect the 18 P2P exceptions in `data/evaluation_latest.json`.
+   - Compare extracted confidence vs ground truth to verify whether the `confidence_threshold = 0.60` is properly routing true ambiguity (e.g. stalls, over-cap discount demands) vs over-penalizing salvageable intent.
+   - If calibrated: keep 0.60 as locked policy. If loose: make single controlled adjustment and re-run `python scripts/evaluate_batch.py`.
+
+2. **Step 12: Merchant Dashboard / Judge Evaluation View (Core Build)**:
+   - **Backend API Layer (`src/dashboard_api.py` / FastAPI)**:
+     - `GET /api/metrics` — Current recovery rates, baseline comparison, and cost-weighted error rate from `data/evaluation_latest.json`.
+     - `GET /api/invoices` — List of active B2B invoices and payment failure events with current lifecycle states and payment link URLs.
+     - `GET /api/audit-trail` — Live streaming append-only audit trail with timestamps, policy outcomes, and state transitions.
+     - `POST /api/evaluate` — Trigger batch evaluation on demand with live progress reporting.
+     - `POST /api/simulate-call` — Interactive test interface to paste Hinglish text or upload audio, run Perception $\to$ Policy $\to$ Razorpay, and see instant live payment link generation.
+   - **Frontend UI (`ui/` / Modern Rich Aesthetics)**:
+     - KPI Summary Ribbon (Recovery Rate, Lift vs Baseline, Total Invoiced vs Recovered).
+     - Split-view dashboard: Active Invoices on left, Live Audit Log Stream on right.
+     - Interactive Evaluation Scorecard tab for judges.
+     - Single-Utterance Recovery Playground tab (for live demo).
+
+3. **Real-Voice Date Parsing Retest (Optional Voice Polish)**:
+   - Record 3–4 real human voice samples for day+तक combinations (e.g. 'Wednesday tak') to validate Saaras v3 + Gemini date extraction without TTS boundary artifacts.
