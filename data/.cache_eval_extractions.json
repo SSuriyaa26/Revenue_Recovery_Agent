@@ -1,0 +1,398 @@
+{
+  "4088c6004d0b503962c6d64f082e4da5e7aa574a70c723368b1a0ee0aa6e224a": {
+    "data": {
+      "committed_amount": 20000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-24",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Extracted full amount 20000 with commitment by Monday (2026-08-24)."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "ecc3fe842ca2aa0b111e81177c69bbaa5d97842f80f1f1b5f558e9dc801be086": {
+    "data": {
+      "committed_amount": 65000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-26",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Amount parsed as 65 hazaar = 65000. Date resolved to next Wednesday (2026-08-26) relative to reference date. Full payment promised, no split percentage."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "4abc3c24437df3841baca96d1dcac1e0958e298c2cec13748105db6faf51abef": {
+    "data": {
+      "committed_amount": 42000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-21",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Full invoice amount (42000) promised by next Friday (2026-08-21). Clear commitment with no split."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "cc552b9254f2beb33a4dc457ecfc673302d9e82b36848db7dbdaeb8947939bdc": {
+    "data": {
+      "committed_amount": 110000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-24",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promises to transfer the full invoice amount (1 lakh 10 hazaar = 110,000) by Monday; date resolved to 2026-08-24. No split indicated."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "d2bbbff89ed78c21a5dfedb30cf8abb030354f0b829b04bcc47f6031ed8a42c4": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": "2026-08-31",
+      "confidence": 0.85,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer commits to pay full invoice before 1 September 2026; interpreted committed_date as the day before (2026-08-31). No specific amount or split percentage mentioned."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "228bd10cf3fd5f1dfcdb7c3b920472c69670446aac4433435d3a0f861c4b2630": {
+    "data": {
+      "committed_amount": 125000.0,
+      "split_pct": 50.0,
+      "committed_date": "2026-08-20",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Identified split promise: half now, half in 15 days. 'abhi' resolved to reference date. Calculated 50% of original invoice (250000) = 125000."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "4bab2f515f91a6ccc1065b4b0a8092b8b41724c1d4f5b2a8322240605acad5a2": {
+    "data": {
+      "committed_amount": 108000.0,
+      "split_pct": 60.0,
+      "committed_date": null,
+      "confidence": 0.93,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer commits to pay 60% of the 1.8 lakh invoice (₹108,000) now; no specific payment date mentioned."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "fe8ddd534ed7cf47d35aeed00e30a4e305e4b211f84c922b1ba0c4565dfb1d93": {
+    "data": {
+      "committed_amount": 38000.0,
+      "split_pct": 40.0,
+      "committed_date": "2026-08-20",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer commits 40% of invoice (₹38,000) to be paid immediately (today) and requests payment link; remaining amount implied for 2 weeks later."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "49d9d98e2fe5f53c5e73c37669657218e3e02d740e1b992afe3fd947817f99c6": {
+    "data": {
+      "committed_amount": 25000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-20",
+      "confidence": 0.92,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promises to pay 25,000 today (reference date), another 25,000 next week (date unresolved), and the remaining balance later, totaling three installments."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "33c73e30bf12a86e0d4d5e45445b7396e9392061f79e04b522f26e29f1bf11a4": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.45,
+      "language_detected": "hinglish",
+      "extraction_notes": "Speaker does not provide a specific payment amount or date, only mentions possible future dates (Monday or next week) and will confirm later, making the intent vague."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "7e2805ea96acf617da71a1851d82a32babe1389da5cd7c5b960a6628c72cdbc1": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.45,
+      "language_detected": "hinglish",
+      "extraction_notes": "Speaker only mentions vague future check ('next week') without any amount or firm payment date; intent is unclear and non‑committal."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "459908392908d4e09a2168eef03d6a4e8aea73e376f2a79861fc062736cf1fec": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.55,
+      "language_detected": "hinglish",
+      "extraction_notes": "Speaker mentions possible payment by Wednesday or Thursday but says \"pata nahi exactly kab hoga\" (uncertain). No amount or split provided. Date is ambiguous per rules, so committed_date set to null with confidence below 0.60."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "4d60bd1c9b432b414b4baffc680525a1768c2f7a46d1f734e4f7ff5442c5907c": {
+    "data": {
+      "committed_amount": 48000.0,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.55,
+      "language_detected": "hinglish",
+      "extraction_notes": "Amount '48 hazaar' recognized as full invoice (48000). Commitment date is vague ('baad me'), so date set to null and confidence lowered."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "e1225a2c06ae63c5983bf4ef49cac746f3f02e2cf807ffefd1ccfd957de08a5f": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.4,
+      "language_detected": "hinglish",
+      "extraction_notes": "Speaker mentions tentative amounts (5000, 9000) but expresses confusion and does not provide a clear commitment to pay any specific amount or date; intent is vague."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "26e2b845d43927cacd71c4be9df341ee579649c41000d8a2339f3937555b0b99": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.3,
+      "language_detected": "hinglish",
+      "extraction_notes": "Speaker asks which amount to pay (20k or 35k) without committing to any payment date or amount; intent is unclear."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "c55d8acb424c88693fdbbf63d80d656db64b29e9ac1f9626ff0969796c4aa4ca": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.32,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer explicitly states inability to pay any amount now and no options; no commitment on amount or date detected."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "d5d5e0f6e790fdccd10b0210505bbf23307ee1c252b0063af6fa59cac3beae84": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.55,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promises to pay the full invoice next month but does not specify an exact date or amount; date is vague, leading to lower confidence."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "d7f4c798049d0e8a09c7d2aab3af0f30f6a21e27a5b0707d0bca312ad7eda2e9": {
+    "data": {
+      "committed_amount": 58000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-21",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Full invoice amount promised by Friday (2026-08-21); conditional fallback to next Monday if not paid."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "312c7c0f6fca58cf0050a0e1cf584808dfb22e83fdba326ad601520d15642550": {
+    "data": {
+      "committed_amount": 82000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-20",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Amount '82 hazaar' parsed as 82000. No split percentage mentioned. Date phrase 'Thursday tak' resolved to reference date 2026-08-20 (Thursday). Clear commitment, high confidence."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "da4d833bd9cff6200a5ed13dc6530cdd7fad4b7d7f42d3310f1ef1fda56e8666": {
+    "data": {
+      "committed_amount": 105000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-26",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promises to pay full invoice amount (1.05 lakh = 105,000) by Wednesday (nearest upcoming Wednesday from reference date 2026-08-20, i.e., 2026-08-26). No split percentage mentioned. Commitment is clear and unambiguous."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "c65462997007c41fe93a1d18dab779c781707c3901ccb05ada145b74755ed5f2": {
+    "data": {
+      "committed_amount": 47000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-24",
+      "confidence": 0.81,
+      "language_detected": "hindi",
+      "extraction_notes": "Amount '47 hazaar' parsed as 47000. Primary commitment for Monday resolved to next Monday 2026-08-24; fallback to Tuesday noted but primary date kept. Phrase 'Ek do din idhar udhar ho sakta hai' adds slight uncertainty, lowering confidence to 0.81."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "0aaff3d4fe419a7977c538021d256d83bcae6874817a0a74045838dab0740c34": {
+    "data": {
+      "committed_amount": 200000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-20",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promises to pay full invoice amount (2 lakh = 200,000) by Thursday, which is the reference date (2026-08-20). No split percentage mentioned; full payment implied. Commitment is clear and unambiguous."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "cde825af5036ae65ea4b3ca609a3b6846c6fd62ba2bf41d346deee962d1f23e1": {
+    "data": {
+      "committed_amount": 145000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-21",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promises to pay full invoice amount (1.45 lakh) by Friday, which resolves to 2026-08-21 given reference date. Clear commitment, high confidence."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "11603110ac09da95622dfebd45cbcbb63ee130398810c9185ce2cdbd318ff2a4": {
+    "data": {
+      "committed_amount": 310000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-24",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Parsed amount 3.1 lakh = 310000.0; date phrase 'Monday tak' resolved to next Monday 2026-08-24; full invoice promised (no split specified)."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "fb7678e27ec84d95601f1a3968caa421f8076b0fa1883324503b3b19c514693d": {
+    "data": {
+      "committed_amount": 78000.0,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.55,
+      "language_detected": "hinglish",
+      "extraction_notes": "Amount explicitly stated as 78 hazaar (78,000). No split percentage mentioned. Date referenced as 'next week' which is not covered by defined relative date rules, thus treated as vague; committed_date set to null and confidence lowered."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "cfa0769386eabfbfc4f16a2eddbdb8ed0df1380b69af76f8bb59ca9fdad0cf0c": {
+    "data": {
+      "committed_amount": 56000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-21",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer commits to paying the full invoice amount of 56000 on Friday (2026-08-21)."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "50c718ab8b936ecbda12b334ce6df4f206a327d9865aa53b986b1b4206a7faac": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.45,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer asks for a 70% discount before paying; no explicit payment amount or date is provided, making the intent vague."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "a80e57547eaac6e191221f6fa533fba937d4d43fdcd4e9227739486fc8e5af6b": {
+    "data": {
+      "committed_amount": 95000.0,
+      "split_pct": 50.0,
+      "committed_date": "2026-09-01",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promises 50% of invoice now (95,000) and requests payment link; remaining 50% to be paid in the first week of September, resolved to 2026-09-01. Clear split and date, high confidence."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "105454eede913eba28abf753d00eed6c3771ef7267830b235f374d568b2ce34e": {
+    "data": {
+      "committed_amount": 33000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-20",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer explicitly promises to pay the full invoice amount (33000) on Thursday; resolved to reference date 2026-08-20 as the nearest Thursday on or after the reference date. No split percentage mentioned."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "9fab1a9e7db33f46e1ddd222ccfc0df894cc6fffb57f008a3fb132c9434e212f": {
+    "data": {
+      "committed_amount": 99000.0,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.55,
+      "language_detected": "hinglish",
+      "extraction_notes": "Amount '99 hazaar' parsed as 99000. Date mentioned as 'Monday ya Tuesday' next week is ambiguous, so committed_date set to null. Confidence lowered due to vague date."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "15a0b8fa6d92171b509be0f0f1c255a8b610ac2d380cb204830484b5365c41a7": {
+    "data": {
+      "committed_amount": 155000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-26",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Parsed amount 1.55 lakh = 155000. Full invoice promised. Date phrase 'Wednesday tak' resolved to next Wednesday 2026-08-26 relative to reference date. No split indicated."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "724a83910bca6478af48e77df1dcc624382c063f83f3d8bf066f61e08e25487e": {
+    "data": {
+      "committed_amount": 62000.0,
+      "split_pct": null,
+      "committed_date": "2026-09-01",
+      "confidence": 0.95,
+      "language_detected": "hindi",
+      "extraction_notes": "Customer promises to pay the full invoice amount (62000) on the 1st of the next month (2026-09-01) after salary arrives."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "8aeb43ff7d0fee944dad8ed115c10ee050788906b02d90d4e270609573061caa": {
+    "data": {
+      "committed_amount": 25500.0,
+      "split_pct": 30.0,
+      "committed_date": "2026-08-20",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promises 30% of invoice now (30% of 85000 = 25500) and 70% by next month end. 'abhi' resolved to reference date 2026-08-20. Clear split and amount, high confidence."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "e4fd22920e6b8c8317de21478b5385af2db0c25bc4d5408a9d0280ac368bc313": {
+    "data": {
+      "committed_amount": 115000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-21",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promises to pay 1.15 lakh (115,000) by Friday; resolved to 2026-08-21. Full payment implied, no split percentage. Clear intent, high confidence."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "43d362aecf701c02315c999e4f1c9e09ea0df3fb7422b6887d0436c3405f5e61": {
+    "data": {
+      "committed_amount": 27000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-21",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Parsed amount '27 hazaar' as 27000. Full payment promised. Date phrase 'kal' resolved to 2026-08-21 (tomorrow). Clear commitment."
+    },
+    "model": "openai/gpt-oss-120b"
+  },
+  "073ec2b81157b2301bee542b222935ba2b5f684daa95cff7de6ed981d5856b04": {
+    "data": {
+      "committed_amount": 175000.0,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.65,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer states they will pay the full invoice (1.75 lakh) but only if a 50% discount is given; otherwise payment will follow the regular schedule. No explicit payment date is provided, making the commitment conditional and vague, resulting in lower confidence."
+    },
+    "model": "openai/gpt-oss-120b"
+  }
+}

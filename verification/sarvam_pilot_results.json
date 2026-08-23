@@ -1,0 +1,122 @@
+[
+  {
+    "phrase_num": 1,
+    "filename": "Phrase 1.m4a",
+    "original": "भैया, थोड़ा मुश्किल चल रहा है अभी। मैं next Friday तक पूरा payment कर दूंगा।",
+    "transcription": "भैया थोड़ा मुश्किल चल रहा है अभी, मैं next Friday तक पूरा payment कर दूंगा।",
+    "language_code": "hi-IN",
+    "confidence": "N/A",
+    "raw_response": {
+      "request_id": "20260823_9efeafa5-a42c-41b7-99a0-062ea090d4a5",
+      "transcript": "भैया थोड़ा मुश्किल चल रहा है अभी, मैं next Friday तक पूरा payment कर दूंगा।",
+      "language_code": "hi-IN",
+      "language_probability": 0.999
+    },
+    "status": "SUCCESS"
+  },
+  {
+    "phrase_num": 2,
+    "filename": "Phrase 2.m4a",
+    "original": "Sir मैंने सोचा था कि इस week दे दूंगा, but कुछ delay हो गया। Monday तक twenty thousand भेज दूंगा, बाकी next month।",
+    "transcription": "सर मैंने सोचा था कि इस week दे दूंगा but कुछ delay हो गया Monday तक 20000 भेज दूंगा बाकी next month",
+    "language_code": "hi-IN",
+    "confidence": "N/A",
+    "raw_response": {
+      "request_id": "20260823_b681ded4-fb42-4703-bf19-8832f69b3597",
+      "transcript": "सर मैंने सोचा था कि इस week दे दूंगा but कुछ delay हो गया Monday तक 20000 भेज दूंगा बाकी next month",
+      "language_code": "hi-IN",
+      "language_probability": 0.994
+    },
+    "status": "SUCCESS"
+  },
+  {
+    "phrase_num": 3,
+    "filename": "Phrase 3.m4a",
+    "original": "हाँ हाँ, payment हो जाएगा, बस थोड़ा time लगेगा।",
+    "transcription": "हाँ हाँ payment हो जाएगा बस थोड़ा time लगेगा",
+    "language_code": "hi-IN",
+    "confidence": "N/A",
+    "raw_response": {
+      "request_id": "20260823_99e9a1a0-a462-47e7-b87b-12ed994f31c5",
+      "transcript": "हाँ हाँ payment हो जाएगा बस थोड़ा time लगेगा",
+      "language_code": "hi-IN",
+      "language_probability": 0.902
+    },
+    "status": "SUCCESS"
+  },
+  {
+    "phrase_num": 4,
+    "filename": "Phrase 4.m4a",
+    "original": "मेरा factory से पैसा आना है, जैसे ही आता है मैं आपको fifteen thousand rupees transfer कर दूंगा, Wednesday तक।",
+    "transcription": "मेरा फैक्ट्री से पैसा आना है, जैसे ही आता है मैं आपको ₹15,000 ट्रांसफ़र कर दूँगा, वेंडज़ेटक।",
+    "language_code": "hi-IN",
+    "confidence": "N/A",
+    "raw_response": {
+      "request_id": "20260823_fc9f63b2-06ac-44eb-b3a0-9fe2fc28110b",
+      "transcript": "मेरा फैक्ट्री से पैसा आना है, जैसे ही आता है मैं आपको ₹15,000 ट्रांसफ़र कर दूँगा, वेंडज़ेटक।",
+      "language_code": "hi-IN",
+      "language_probability": 0.999
+    },
+    "status": "SUCCESS"
+  },
+  {
+    "phrase_num": 5,
+    "filename": "Phrase 5.m4a",
+    "original": "I'll clear the full invoice by 25th, no issues, बस एक दो दिन का time चाहिए।",
+    "transcription": "I'll clear the full invoice by 25th no issues, bas ek do din ka time chahiye.",
+    "language_code": "en-IN",
+    "confidence": "N/A",
+    "raw_response": {
+      "request_id": "20260823_e3309f3d-bc47-4839-bce7-fdde1ed41e37",
+      "transcript": "I'll clear the full invoice by 25th no issues, bas ek do din ka time chahiye.",
+      "language_code": "en-IN",
+      "language_probability": 0.932
+    },
+    "status": "SUCCESS"
+  },
+  {
+    "phrase_num": 6,
+    "filename": "Phrase 6.m4a",
+    "original": "अभी cash flow tight है यार, इस महीने सिर्फ half amount कर पाऊंगा, remaining अगले महीने की salary आने के बाद।",
+    "transcription": "अभी cash flow tight है यार इस महीने सिर्फ़ half amount कर पाऊँगा remaining अगले महीने की salary आने के बाद",
+    "language_code": "hi-IN",
+    "confidence": "N/A",
+    "raw_response": {
+      "request_id": "20260823_9dde0112-685f-4ecd-92ec-b313135b85a3",
+      "transcript": "अभी cash flow tight है यार इस महीने सिर्फ़ half amount कर पाऊँगा remaining अगले महीने की salary आने के बाद",
+      "language_code": "hi-IN",
+      "language_probability": 0.998
+    },
+    "status": "SUCCESS"
+  },
+  {
+    "phrase_num": 7,
+    "filename": "Phrase 7.m4a",
+    "original": "कल तक बता दूंगा exact date, अभी confirm नहीं है।",
+    "transcription": "कल तक बता दूँगा exact date अभी confirm नहीं है।",
+    "language_code": "hi-IN",
+    "confidence": "N/A",
+    "raw_response": {
+      "request_id": "20260823_a80e8da4-2956-4fdc-918c-0bbc36b1a3a5",
+      "transcript": "कल तक बता दूँगा exact date अभी confirm नहीं है।",
+      "language_code": "hi-IN",
+      "language_probability": 0.999
+    },
+    "status": "SUCCESS"
+  },
+  {
+    "phrase_num": 8,
+    "filename": "Phrase 8.m4a",
+    "original": "Sorry for the delay, मैं Thursday को ₹8500 transfer कर दूंगा through UPI।",
+    "transcription": "Sorry for the delay, मैं Thursday को ₹8500 transfer कर दूंगा through UPI.",
+    "language_code": "en-IN",
+    "confidence": "N/A",
+    "raw_response": {
+      "request_id": "20260823_52e81437-87de-4ae8-9a9e-9a50459030ac",
+      "transcript": "Sorry for the delay, मैं Thursday को ₹8500 transfer कर दूंगा through UPI.",
+      "language_code": "en-IN",
+      "language_probability": 0.974
+    },
+    "status": "SUCCESS"
+  }
+]

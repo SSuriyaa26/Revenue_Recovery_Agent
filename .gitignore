@@ -10,4 +10,10 @@ venv/
 .DS_Store
 Thumbs.db
 scratch/
-data/.cache_eval_extractions.json
+
+# Raw audio test files & recordings (large binaries, not product code)
+*.m4a
+*.mp4a
+*.wav
+*.mp3
+Speech_test/
