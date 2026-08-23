@@ -21,6 +21,11 @@ from google.genai import types
 from contracts.perception_output import CommitmentExtraction, DetectedLanguage
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class _LLMExtractionSchema(BaseModel):
     """Intermediate schema for Gemini structured JSON output."""
     committed_amount: Optional[float] = Field(
@@ -103,8 +108,12 @@ class CommitmentExtractor:
         transcript: str,
         reference_date: date,
         original_amount: Optional[float] = None,
-    ) -> dict[str, Any]:
-        """Calls Gemini with structured JSON output and automatic retry/fallback."""
+    ) -> tuple[dict[str, Any], str]:
+        """Calls Gemini with structured JSON output and automatic retry/fallback.
+
+        Returns:
+            Tuple of (extracted_dict, model_used_name)
+        """
         client = self._get_client()
 
         ref_str = f"{reference_date.isoformat()} ({reference_date.strftime('%A')})"
@@ -126,6 +135,14 @@ class CommitmentExtractor:
         last_error = None
 
         for model in models_to_try:
+            if model != self.model_name:
+                logger.warning(
+                    "[LLM Model Fallback Triggered] Primary model '%s' failed (error: %s). Attempting fallback to '%s'.",
+                    self.model_name,
+                    last_error,
+                    model,
+                )
+
             for attempt in range(4):
                 try:
                     response = client.models.generate_content(
@@ -134,7 +151,14 @@ class CommitmentExtractor:
                         config=config,
                     )
                     raw_text = response.text.strip()
-                    return json.loads(raw_text)
+                    parsed = json.loads(raw_text)
+                    if model != self.model_name:
+                        logger.warning(
+                            "[LLM Model Fallback Succeeded] Successfully extracted commitment using fallback model '%s' instead of primary '%s'.",
+                            model,
+                            self.model_name,
+                        )
+                    return parsed, model
                 except Exception as e:
                     last_error = e
                     err_msg = str(e)
@@ -176,7 +200,7 @@ class CommitmentExtractor:
             )
 
         ref_date = reference_date or date.today()
-        extracted_raw = self._call_llm(transcript.strip(), ref_date, original_amount)
+        extracted_raw, model_used = self._call_llm(transcript.strip(), ref_date, original_amount)
 
         # Parse date
         parsed_date: Optional[date] = None
@@ -203,6 +227,12 @@ class CommitmentExtractor:
             if 0 < split_pct <= 100:
                 committed_amt = round((split_pct / 100.0) * original_amount, 2)
 
+        # Append fallback model tag to extraction_notes if fallback occurred
+        notes = extracted_raw.get("extraction_notes") or ""
+        if model_used != self.model_name:
+            fallback_tag = f"[Model Fallback: {self.model_name} -> {model_used}]"
+            notes = f"{fallback_tag} {notes}".strip()
+
         return CommitmentExtraction(
             committed_amount=committed_amt,
             split_pct=split_pct,
@@ -210,5 +240,5 @@ class CommitmentExtractor:
             confidence=float(extracted_raw.get("confidence", 0.5)),
             raw_transcript=transcript.strip(),
             language_detected=lang_enum,
-            extraction_notes=extracted_raw.get("extraction_notes"),
+            extraction_notes=notes if notes else None,
         )

@@ -70,6 +70,8 @@ python scripts/freeze_datasets.py
 6. **Duplicate Event Audit Trail**: Duplicate webhook deliveries produce 2 audit log entries total (1 for initial processing + 1 for duplicate ignored), maximizing judge transparency.
 7. **Semantic Validation Gate Rule in Perception Gateway**: Payloads with `raw_transcript` + `confidence` but zero commitment fields (`committed_amount` and `committed_date` are both `None`) are routed to `exception_list` as `schema_validation_failed`.
    > *Note: Invented during build, not sourced from SPEC or EDD — needs validation against real dev-set data before trusting it fully, as it has not yet been tested against legitimate vague-but-real customer commitments.*
+8. **LLM Primary/Fallback Resilience (Gemini 3.7 Flash → Gemini 3.6 Flash)**: Automatic retry and fallback from `gemini-3.7-flash` to `gemini-3.6-flash` on server 503 unavailability or 429 rate limit errors.
+   > *Note: Invented during build, not sourced from SPEC or EDD (same category as the Perception Gateway rule). Free-tier API rate limits make this fallback significantly more likely to trigger during high-throughput demo runs and batch evaluations than initially assumed. Visibility is guaranteed via structured logger warnings (`[LLM Model Fallback Triggered]`) and metadata tags prepended to `CommitmentExtraction.extraction_notes`.*
 
 ---
 

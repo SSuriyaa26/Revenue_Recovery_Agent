@@ -33,7 +33,7 @@ def test_devanagari_and_roman_script_extraction():
         "extraction_notes": "Extracted Monday commitment from Devanagari text"
     }
     
-    with patch.object(extractor, "_call_llm", return_value=mock_devanagari_output):
+    with patch.object(extractor, "_call_llm", return_value=(mock_devanagari_output, "gemini-3.7-flash")):
         res1 = extractor.extract(
             "सर मैंने सोचा था कि इस week दे दूंगा but कुछ delay हो गया Monday तक 20000 भेज दूंगा बाकी next month",
             reference_date=date(2026, 8, 20)
@@ -53,7 +53,7 @@ def test_devanagari_and_roman_script_extraction():
         "extraction_notes": "Extracted 25th commitment from Roman text"
     }
     
-    with patch.object(extractor, "_call_llm", return_value=mock_roman_output):
+    with patch.object(extractor, "_call_llm", return_value=(mock_roman_output, "gemini-3.7-flash")):
         res2 = extractor.extract(
             "I'll clear the full invoice by 25th no issues, bas ek do din ka time chahiye.",
             reference_date=date(2026, 8, 20),
@@ -77,10 +77,35 @@ def test_defensive_date_parsing_vague_input():
         "extraction_notes": "Vague intent: customer said 'agle hafte kisi din' with no specific date"
     }
     
-    with patch.object(extractor, "_call_llm", return_value=mock_vague_output):
+    with patch.object(extractor, "_call_llm", return_value=(mock_vague_output, "gemini-3.7-flash")):
         res = extractor.extract(
             "Monday tak... ya phir... haan Monday, no wait Tuesday. Actually agle hafte kisi din de dunga.",
             reference_date=date(2026, 8, 22)
         )
         assert res.committed_date is None
         assert res.confidence < 0.70  # Below extraction_confidence_threshold
+
+
+def test_fallback_logging_and_metadata_tagging(caplog):
+    """Verify when fallback triggers (3.7 -> 3.6), it is logged and tagged in extraction_notes."""
+    import logging
+    extractor = CommitmentExtractor(api_key="fake_key", model_name="gemini-3.7-flash")
+    
+    mock_fallback_output = {
+        "committed_amount": 50000.0,
+        "split_pct": None,
+        "committed_date": "2026-08-25",
+        "confidence": 0.95,
+        "language_detected": "hinglish",
+        "extraction_notes": "Extracted commitment on 25th"
+    }
+
+    # Simulate _call_llm returning the fallback model name
+    with patch.object(extractor, "_call_llm", return_value=(mock_fallback_output, "gemini-3.6-flash")):
+        with caplog.at_level(logging.WARNING):
+            res = extractor.extract(
+                "I will pay 50000 on 25th",
+                reference_date=date(2026, 8, 20),
+                original_amount=50000.0
+            )
+            assert "[Model Fallback: gemini-3.7-flash -> gemini-3.6-flash]" in res.extraction_notes
