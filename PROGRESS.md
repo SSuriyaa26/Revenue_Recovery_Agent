@@ -105,7 +105,7 @@ Hackathon submissions are scored across 4 core categories:
 ## 8. Secret Scanning Verification Status
 
 - **Pre-Staging Secret Scan**: **VERIFIED CLEAN**. Executed via ripgrep across `src/`, `tests/`, `scripts/` before `git add` for `sk-`, `rzp_`, `api_key=`, `API_KEY=`, `password=`. Zero credentials found.
-- **Git Pre-Commit Hook**: Currently **PLANNED / OPTIONAL** (manual scan verified cleanly prior to commit; automated OS git pre-commit hook script `.git/hooks/pre-commit` can be installed if required).
+- **Git Pre-Commit Hook**: **ACTIVE & VERIFIED**. Verified via `.git/hooks/pre-commit` calling `scripts/secret_scanner.py`. Confirmed blocking staged secret credentials with exit code 1 while allowing clean commits.
 
 ---
 
