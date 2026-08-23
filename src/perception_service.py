@@ -100,3 +100,8 @@ class PerceptionService:
         # Step 3: Perception Gateway Schema & Semantic Gate
         payload = extraction.model_dump(mode="json")
         return ingest_extraction(payload)
+
+
+def get_perception_service() -> PerceptionService:
+    """Factory to create a default PerceptionService instance."""
+    return PerceptionService()

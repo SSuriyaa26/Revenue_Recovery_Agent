@@ -1,20 +1,20 @@
 # Progress & Context Snapshot — AI Revenue Recovery Agent
 
 **Last Updated**: 2026-08-23  
-**Current EDD Step**: Step 9 Completed (Paused at Step 10 Gateway)  
-**Project Status**: On Track / Approx. 2.5 Days Ahead of 7-Day Schedule  
+**Current EDD Step**: Step 10 Completed (Paused at Step 11 Gateway)  
+**Project Status**: On Track / Approx. 3 Days Ahead of 7-Day Schedule  
 
 ---
 
 ## 1. Executive Summary & Verification Commands
 
-Steps 1 through 9 of the Evaluation-Driven Development (EDD) spec are **100% built, tested, and empirically verified**. The Perception Service layer (vendor-agnostic ASR abstraction, Gemini 3.7 Flash intent extractor, and Perception Gateway validation) is fully operational and verified across dual scripts and audio samples.
+Steps 1 through 10 of the Evaluation-Driven Development (EDD) spec are **100% built, tested, and empirically verified**. The system connects Perception Service, Deterministic Policy Engine, Action Selector, Razorpay Payment Gateway Adapter (live sandbox verified), State Machine, and Audit Logger in an end-to-end operational pipeline.
 
 ### Verification Commands (Run from Project Root)
 To verify the entire system state from scratch in a fresh session:
 
 ```powershell
-# 1. Run the full unit and integration test suite (45 tests, all green)
+# 1. Run the full unit and integration test suite (55 tests, all green)
 python -m pytest tests/ -v
 
 # 2. Verify dataset integrity and checksum hashes
@@ -36,8 +36,8 @@ python scripts/freeze_datasets.py
 | **Step 7** | Audit Logger Implementation | **DONE** | `src/audit_logger.py` wired into all policy, state, and event execution paths |
 | **Step 8** | Synthetic Datasets, Freeze & Checksum | **DONE** | 6 datasets (124 records) created in `data/`, SHA-256 checksum manifest generated in `data/checksums.json` |
 | **Step 9** | Perception Service (ASR + LLM + Gateway) | **DONE** | `src/asr_adapter.py`, `src/commitment_extractor.py`, `src/perception_service.py` verified across 8 speech test audio files & dev set |
-| **Step 10** | Razorpay API Adapter & Full Orchestration | **NOT STARTED** | Paused by design; awaiting Razorpay test mode API keys |
-| **Step 11** | Evaluation Harness & Held-Out Batch Scoring | **NOT STARTED** | Scheduled after Step 10 |
+| **Step 10** | Razorpay API Adapter & Full Orchestration | **DONE** | `src/payment_adapter.py`, `src/orchestrator.py` live sandbox tested (plink creation, status check, error path, golden trajectory) |
+| **Step 11** | Evaluation Harness & Held-Out Batch Scoring | **NOT STARTED** | Scheduled next; rate limiting / pacing mechanism required for batch LLM evaluation |
 | **Step 12** | Merchant Dashboard / Judge View | **NOT STARTED** | Presentation layer scheduled for late build |
 | **Step 13** | Live Demo Dry-Run & Fallback Preparation | **NOT STARTED** | Final verification step |
 
@@ -45,6 +45,8 @@ python scripts/freeze_datasets.py
 
 ## 3. What Was Built & Verified Today
 
+- **Vendor-Agnostic Payment Adapter (`src/payment_adapter.py`)**: Typed contracts (`PaymentLinkResult`, `InvoiceStatusResult`) decoupling payment gateway APIs from core logic. Implements `RazorpayPaymentAdapter` (REST API with Basic Auth, amount-to-paise conversion, error handling) and `MockPaymentAdapter` (deterministic offline testing), switchable via `PAYMENT_GATEWAY_PROVIDER`.
+- **End-to-End Orchestrator (`src/orchestrator.py`)**: Glues Perception Service $\to$ Policy Engine $\to$ Action Selector $\to$ Payment Gateway Adapter $\to$ State Machine $\to$ Audit Logger.
 - **Vendor-Agnostic ASR Abstraction (`src/asr_adapter.py`)**: `TranscriptionResult` typed contract decoupling downstream extraction from vendors. Implements `SarvamASRAdapter` (Saaras v3 codemix mode with retries), `MockASRAdapter` (deterministic offline testing), and `WhisperASRAdapter` (swappable fallback via `ASR_PROVIDER` config).
 - **Gemini Structured Commitment Extractor (`src/commitment_extractor.py`)**: Temperature=0.0 structured JSON extraction using `gemini-3.7-flash` (with resilience fallback to `gemini-3.6-flash`). Handles dual-script Hinglish (Devanagari and Roman script), defensive date parsing (vague dates route to `exception_list`), and Indian amount/split % parsing.
 - **Perception Service Orchestrator (`src/perception_service.py`)**: Glues ASR Adapter, Commitment Extractor, and Perception Gateway (`ingest_extraction`) into an end-to-end voice and text ingestion pipeline.
@@ -72,6 +74,8 @@ python scripts/freeze_datasets.py
    > *Note: Invented during build, not sourced from SPEC or EDD — needs validation against real dev-set data before trusting it fully, as it has not yet been tested against legitimate vague-but-real customer commitments.*
 8. **LLM Primary/Fallback Resilience (Gemini 3.7 Flash → Gemini 3.6 Flash)**: Automatic retry and fallback from `gemini-3.7-flash` to `gemini-3.6-flash` on server 503 unavailability or 429 rate limit errors.
    > *Note: Invented during build, not sourced from SPEC or EDD (same category as the Perception Gateway rule). Free-tier API rate limits make this fallback significantly more likely to trigger during high-throughput demo runs and batch evaluations than initially assumed. Visibility is guaranteed via structured logger warnings (`[LLM Model Fallback Triggered]`) and metadata tags prepended to `CommitmentExtraction.extraction_notes`.*
+9. **Vendor-Agnostic Payment Gateway Abstraction (`src/payment_adapter.py`)**: `PaymentLinkResult` and `InvoiceStatusResult` typed contracts decouple Razorpay REST API shapes and paise amount conversions from Action Selector, Policy Engine, and Event Consumer.
+   > *Note: Invented during build (same design pattern as `src/asr_adapter.py`) to prevent external API schema churn from infecting deterministic core business logic.*
 
 ---
 
@@ -89,6 +93,11 @@ python scripts/freeze_datasets.py
 
 ### Known Issues
 - **Unverified Date Parsing on Real Speech**: `committed_date` parsing is **UNVERIFIED against real (non-TTS) speech** — the pilot test used TTS-generated audio, which may not reflect real speaker pacing on day+तक combinations (e.g. 'Wednesday tak'). Must be retested with real recorded voice before demo day, ideally before Day 6. Date parsing is defensively implemented: unconfident dates route to `exception_list` / low-confidence path rather than silently defaulting.
+- **Gemini Free-Tier Daily Quota (Step 11 Constraint)**: Google enforces `GenerateRequestsPerDayPerProjectPerModel-FreeTier` of 20 requests/day on preview models (`gemini-3.7-flash` and `gemini-3.6-flash`). The Step 11 batch evaluation harness (evaluating ~94+ records across held-out & adversarial datasets) must implement batch pacing, rate-limit backoff, response caching, or fallback configuration to avoid mid-batch exhaustion on free-tier keys.
+
+### Still-Open Decisions (Not Blocking)
+1. **Product Naming**: "Vasooli" was proposed as working title but flagged for reconsideration due to cultural connotations (forceful/goonda debt collection). Decision pending on whether to keep ironside/ironic framing or re-brand before demo materials.
+2. **Team Skill Allocation & Feature Scope**: SPEC §11.8 notes skill allocation across LLM, ASR, Razorpay, and evaluation data engineering. If time/bandwidth compresses, the rule remains: cut the ASR/voice layer (FR-15/17) before cutting any of the guardrail, audit, idempotency, or batch harness requirements (FR-11, FR-12, FR-19, FR-20).
 
 ### Still-Open Decisions (Not Blocking)
 1. **Product Naming**: "Vasooli" was proposed as working title but flagged for reconsideration due to cultural connotations (forceful/goonda debt collection). Decision pending on whether to keep ironside/ironic framing or re-brand before demo materials.

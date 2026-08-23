@@ -31,7 +31,7 @@ class IllegalTransitionError(Exception):
 
 # Legal transitions: from_state → set of legal to_states
 INVOICE_LEGAL_TRANSITIONS: dict[str, set[str]] = {
-    "Open": {"P2P_Committed", "Overdue"},
+    "Open": {"P2P_Committed", "Overdue", "Escalated_Human"},
     "P2P_Committed": {"Partially_Paid", "Paid", "Broken_Promise"},
     "Partially_Paid": {"Paid", "Broken_Promise"},
     "Broken_Promise": {"P2P_Committed", "Escalated_Human"},

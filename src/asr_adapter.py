@@ -209,7 +209,10 @@ def get_asr_adapter(
     prov = (provider or os.getenv("ASR_PROVIDER", "sarvam")).lower().strip()
 
     if prov == "sarvam":
-        return SarvamASRAdapter(api_key=api_key)
+        key = api_key or os.getenv("SARVAM_API_KEY")
+        if not key:
+            return MockASRAdapter(**kwargs)
+        return SarvamASRAdapter(api_key=key)
     elif prov == "mock":
         return MockASRAdapter(**kwargs)
     elif prov == "whisper":
