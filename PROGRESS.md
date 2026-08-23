@@ -110,6 +110,10 @@ Generated via `python scripts/evaluate_batch.py`:
 | **Held-Out Checksum** | `e42295d2f02e9890...` | `85626a71b79ca845...` |
 
 ### Known Issues & Model Disclosure
+- **Independent Live API Verification (Steps 10 & 11 Confirmed Real)**:
+  - Razorpay Test-Mode Integration was independently verified via direct live GET calls to `https://api.razorpay.com/v1/payment_links/plink_TTGwFzhJGC5eFC` and `plink_TTGwL5ErAWdjGJ` (both returned HTTP 200 OK with matching short URLs and amounts).
+  - Groq Batch Extraction was independently verified via live execution (35 real HTTP API calls completed across `p2p_held_out.json` and cached in `data/.cache_eval_extractions.json`).
+- **P2P Exception Rate Calibration (Open Item for Review)**: Flow 1 P2P exception rate is 18/35 (51%) — need to manually review a sample of these tomorrow to confirm the confidence threshold is well-calibrated, not just conservative.
 - **Step 11 Model Attribution Disclosure**: Step 11 batch metrics reflect Groq's (`openai/gpt-oss-120b` / `llama-3.3-70b-versatile`) extraction calibration across the 35 P2P held-out records, rather than Gemini 3.7 Flash, due to free-tier Google AI Studio daily quota limits (20 RPD cap on preview models). Single/interactive live tests continue to use Gemini.
 - **Unverified Date Parsing on Real Speech**: `committed_date` parsing is **UNVERIFIED against real (non-TTS) speech** — the pilot test used TTS-generated audio, which may not reflect real speaker pacing on day+तक combinations (e.g. 'Wednesday tak'). Must be retested with real recorded voice before demo day, ideally before Day 6.
 
@@ -140,9 +144,8 @@ Hackathon submissions are scored across 4 core categories:
 
 ---
 
-## 9. Open Decisions / Tomorrow's Prerequisites
+## 9. Tomorrow's Focus & Action Plan
 
-Before Step 9 and Step 10 implementation can begin, the following external keys/access details are needed:
-1. **Razorpay Test Mode API Key & Secret** (for Razorpay API Adapter in Step 10).
-2. **LLM Provider API Key** (Gemini / OpenAI / Anthropic key for intent extraction in Step 9).
-3. **Sarvam AI API Key** (for Hinglish ASR voice transcription in Step 9, or fallback confirmation to Whisper).
+1. **P2P Exception Rate Calibration Review**: Manually inspect the 18 P2P exceptions in `data/evaluation_latest.json` to confirm whether the 0.60 confidence threshold is appropriately filtering genuine ambiguities vs over-rejecting recoverable intent.
+2. **Real-Voice Date Parsing Retest**: Record 3-4 real human voice samples for day+तक combinations ('Wednesday tak') to validate Saaras v3 + Gemini date extraction without TTS boundary artifacts.
+3. **Step 12: Merchant Dashboard / Judge Evaluation View**: Build the interactive presentation UI showing live recovery metrics, active P2P cases, payment link statuses, and the auditable decision trail.

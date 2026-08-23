@@ -3,7 +3,7 @@
     "flow": "p2p",
     "held_out_set_checksum": "e42295d2f02e989037288be30f712fbfd181d7c4b4dadb2f8cbc0d57211e44dc",
     "policy_config_hash": "2a8f2e301da7b33680bcfc1eb516ec320732e9b28bf14809b3ef233f384c4a65",
-    "run_timestamp": "2026-08-23T17:08:54.222894",
+    "run_timestamp": "2026-08-23T17:10:19.211372",
     "n_records": 35,
     "recovery_rate": 0.3354,
     "naive_baseline_recovery_rate": 0.2687,
@@ -110,7 +110,7 @@
     "flow": "payment_failure",
     "held_out_set_checksum": "85626a71b79ca845bccd7ede1e7ce5aa4efa2fc65c7a69554e9d2e88d8f2f101",
     "policy_config_hash": "2a8f2e301da7b33680bcfc1eb516ec320732e9b28bf14809b3ef233f384c4a65",
-    "run_timestamp": "2026-08-23T17:08:54.224123",
+    "run_timestamp": "2026-08-23T17:10:19.213018",
     "n_records": 35,
     "recovery_rate": 0.8727,
     "naive_baseline_recovery_rate": 0.1933,
@@ -178,6 +178,6 @@
     "guardrail_test_results": "PASS",
     "idempotency_test_results": "PASS"
   },
-  "generated_at": "2026-08-23T17:08:54.224212",
+  "generated_at": "2026-08-23T17:10:19.213126",
   "llm_provider": "groq"
 }
