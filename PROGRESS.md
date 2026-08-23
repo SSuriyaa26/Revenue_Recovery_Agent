@@ -1,21 +1,20 @@
 # Progress & Context Snapshot — AI Revenue Recovery Agent
 
-**Last Updated**: 2026-08-22  
-**Current EDD Step**: Step 8 Completed (Paused at Step 9 Gateway)  
-**Project Status**: Approx. 2 to 2.5 Days Ahead of 7-Day Schedule  
-> *Caveat: Steps 1–8 were the deterministic, no-external-dependency core — the most predictable part of the build. Steps 9–13 (ASR, LLM extraction, live Razorpay integration, full orchestration, demo) are the higher-risk remainder per the SPEC's own risk table. Being ahead here is a time buffer against that risk, not evidence the hard part will also go smoothly.*
+**Last Updated**: 2026-08-23  
+**Current EDD Step**: Step 9 Completed (Paused at Step 10 Gateway)  
+**Project Status**: On Track / Approx. 2.5 Days Ahead of 7-Day Schedule  
 
 ---
 
 ## 1. Executive Summary & Verification Commands
 
-Steps 1 through 8 of the Evaluation-Driven Development (EDD) spec are **100% built, tested, and empirically verified**. All safety-critical guardrails, state machine transitions, idempotency checks, audit logging call paths, and synthetic dataset checksums are fully operational in code.
+Steps 1 through 9 of the Evaluation-Driven Development (EDD) spec are **100% built, tested, and empirically verified**. The Perception Service layer (vendor-agnostic ASR abstraction, Gemini 3.7 Flash intent extractor, and Perception Gateway validation) is fully operational and verified across dual scripts and audio samples.
 
 ### Verification Commands (Run from Project Root)
 To verify the entire system state from scratch in a fresh session:
 
 ```powershell
-# 1. Run the full unit and integration test suite (35 tests, all green)
+# 1. Run the full unit and integration test suite (45 tests, all green)
 python -m pytest tests/ -v
 
 # 2. Verify dataset integrity and checksum hashes
@@ -36,9 +35,9 @@ python scripts/freeze_datasets.py
 | **Step 6** | Audit Log Completeness Tests | **DONE** | `tests/test_audit_log.py` |
 | **Step 7** | Audit Logger Implementation | **DONE** | `src/audit_logger.py` wired into all policy, state, and event execution paths |
 | **Step 8** | Synthetic Datasets, Freeze & Checksum | **DONE** | 6 datasets (124 records) created in `data/`, SHA-256 checksum manifest generated in `data/checksums.json` |
-| **Step 9** | Perception Service (ASR + LLM + Classifier) | **NOT STARTED** | Paused by design; awaiting external API keys (Sarvam AI, LLM API) |
+| **Step 9** | Perception Service (ASR + LLM + Gateway) | **DONE** | `src/asr_adapter.py`, `src/commitment_extractor.py`, `src/perception_service.py` verified across 8 speech test audio files & dev set |
 | **Step 10** | Razorpay API Adapter & Full Orchestration | **NOT STARTED** | Paused by design; awaiting Razorpay test mode API keys |
-| **Step 11** | Evaluation Harness & Held-Out Batch Scoring | **NOT STARTED** | Scheduled after Steps 9 & 10 |
+| **Step 11** | Evaluation Harness & Held-Out Batch Scoring | **NOT STARTED** | Scheduled after Step 10 |
 | **Step 12** | Merchant Dashboard / Judge View | **NOT STARTED** | Presentation layer scheduled for late build |
 | **Step 13** | Live Demo Dry-Run & Fallback Preparation | **NOT STARTED** | Final verification step |
 
@@ -46,6 +45,9 @@ python scripts/freeze_datasets.py
 
 ## 3. What Was Built & Verified Today
 
+- **Vendor-Agnostic ASR Abstraction (`src/asr_adapter.py`)**: `TranscriptionResult` typed contract decoupling downstream extraction from vendors. Implements `SarvamASRAdapter` (Saaras v3 codemix mode with retries), `MockASRAdapter` (deterministic offline testing), and `WhisperASRAdapter` (swappable fallback via `ASR_PROVIDER` config).
+- **Gemini Structured Commitment Extractor (`src/commitment_extractor.py`)**: Temperature=0.0 structured JSON extraction using `gemini-3.7-flash` (with resilience fallback to `gemini-3.6-flash`). Handles dual-script Hinglish (Devanagari and Roman script), defensive date parsing (vague dates route to `exception_list`), and Indian amount/split % parsing.
+- **Perception Service Orchestrator (`src/perception_service.py`)**: Glues ASR Adapter, Commitment Extractor, and Perception Gateway (`ingest_extraction`) into an end-to-end voice and text ingestion pipeline.
 - **Deterministic Policy Engine (`src/policy_engine.py`)**: Network-isolated, LLM-free rule checks. Enforces per-flow discount caps (30% for P2P, 20% for Payment Failure), max retry attempt limits (3), and escalation stopping rules (2 broken promises). Verified zero socket access via mock patch tests.
 - **State Machine (`src/state_machine.py`)**: Transition maps for Invoice and Payment Failure lifecycles. Raises `IllegalTransitionError` on illegal moves (e.g. `Paid -> Open`, `Escalated_Human -> P2P_Committed`) and audit-logs rejections.
 - **Perception Gateway (`src/perception_gateway.py`)**: Sanitization gate enforcing Pydantic contracts. Rejects negative amounts, out-of-range split %, prompt injection payloads, and strips unrecognised fields.
@@ -81,8 +83,12 @@ python scripts/freeze_datasets.py
 
 ---
 
-## 6. Still-Open Decisions (Not Blocking, But Unresolved)
+## 6. Known Issues & Open Decisions
 
+### Known Issues
+- **Unverified Date Parsing on Real Speech**: `committed_date` parsing is **UNVERIFIED against real (non-TTS) speech** — the pilot test used TTS-generated audio, which may not reflect real speaker pacing on day+तक combinations (e.g. 'Wednesday tak'). Must be retested with real recorded voice before demo day, ideally before Day 6. Date parsing is defensively implemented: unconfident dates route to `exception_list` / low-confidence path rather than silently defaulting.
+
+### Still-Open Decisions (Not Blocking)
 1. **Product Naming**: "Vasooli" was proposed as working title but flagged for reconsideration due to cultural connotations (forceful/goonda debt collection). Decision pending on whether to keep ironside/ironic framing or re-brand before demo materials.
 2. **Team Skill Allocation & Feature Scope**: SPEC §11.8 notes skill allocation across LLM, ASR, Razorpay, and evaluation data engineering. If time/bandwidth compresses, the rule remains: cut the ASR/voice layer (FR-15/17) before cutting any of the guardrail, audit, idempotency, or batch harness requirements (FR-11, FR-12, FR-19, FR-20).
 

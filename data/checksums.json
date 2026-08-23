@@ -1,5 +1,5 @@
 {
-  "frozen_at": "2026-08-23T14:15:54.989768+00:00",
+  "frozen_at": "2026-08-23T15:08:56.136098+00:00",
   "frozen_by": "freeze_datasets.py",
   "note": "Held-out files are frozen after this timestamp. Any modification invalidates results (EDD \u00a73.3, \u00a78.1).",
   "files": {

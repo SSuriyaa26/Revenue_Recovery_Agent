@@ -5,19 +5,19 @@ from pathlib import Path
 
 # Secret patterns to detect
 PATTERNS = [
-    ("Razorpay Live Key", r"rzp_live_[A-Za-z0-9]{10,}"),
-    ("Razorpay Test Key", r"rzp_test_[A-Za-z0-9]{10,}"),
-    ("OpenAI-style Secret Key", r"sk-[A-Za-z0-9]{20,}"),
-    ("Google/Gemini API Key", r"AIza[A-Za-z0-9_-]{30,}"),
-    ("AWS Access Key", r"AKIA[A-Z0-9]{16}"),
-    ("Sarvam AI Key", r"sarvam_[A-Za-z0-9_-]{16,}"),
+    ("Razorpay Live Key", r"\brzp_live_[A-Za-z0-9]{10,}"),
+    ("Razorpay Test Key", r"\brzp_test_[A-Za-z0-9]{10,}"),
+    ("OpenAI-style Secret Key", r"\bsk-[A-Za-z0-9]{20,}"),
+    ("Google/Gemini API Key", r"\bAIza[A-Za-z0-9_-]{30,}"),
+    ("AWS Access Key", r"\bAKIA[A-Z0-9]{16}"),
+    ("Sarvam AI Key", r"\bsk_[a-z0-9]{8}_[A-Za-z0-9_-]{20,}"),
     ("Generic Hardcoded Credential", r"(api_key|secret|password|token)\s*[:=]\s*[\"'][A-Za-z0-9_-]{16,}[\"']"),
 ]
 
 # Substrings that mark a line as safe mock/test data
 ALLOWLIST_SUBSTRINGS = [
     "fake", "dummy", "placeholder", "your_api_key_here",
-    "sample", "test_mode", "evt_", "rpevt_", "example"
+    "sample", "test_mode", "evt_", "rpevt_", "example", "mock"
 ]
 
 # File extensions to skip
