@@ -121,11 +121,7 @@ class RevenueRecoveryOrchestrator:
                 max_discount_pct=max_disc,
             )
             if discount_decision.get("decision") == "DENIED":
-                # Advance state to Escalated_Human
-                new_status = InvoiceStatus.ESCALATED_HUMAN.value
-                state_machine.transition(entity_id=invoice_id, from_state=curr_status, to_state=new_status)
-
-                # Log denial
+                # Option 2: State remains unchanged; denial is audit-logged and escalated to human operator
                 entry = self.audit_logger.log_policy_decision(
                     trigger_input={"invoice_id": invoice_id, "requested_pct": requested_discount_pct, "max_pct": max_disc},
                     decision=discount_decision,
@@ -141,7 +137,7 @@ class RevenueRecoveryOrchestrator:
                     extraction=extraction,
                     policy_decision=discount_decision,
                     previous_state=curr_status,
-                    new_state=new_status,
+                    new_state=curr_status,
                     audit_entries=audit_records,
                 )
 

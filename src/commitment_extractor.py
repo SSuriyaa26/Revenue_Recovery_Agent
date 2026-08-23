@@ -7,66 +7,102 @@ following EDD §5.1 contracts.
 
 from __future__ import annotations
 
-from datetime import date, datetime
+import hashlib
 import json
+import logging
 import os
-import re
 import time
-from typing import Any, Optional, Union
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+import requests
 from google import genai
 from google.genai import types
+from pydantic import BaseModel, Field
 
 from contracts.perception_output import CommitmentExtraction, DetectedLanguage
+from dotenv import load_dotenv
 
-
-import logging
+load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CACHE_FILE_PATH = PROJECT_ROOT / "data" / ".cache_eval_extractions.json"
+
+
+def _get_cache_key(provider: str, model: str, transcript: str, ref_str: str, original_amount: Optional[float]) -> str:
+    raw = f"{provider}:{model}:{transcript.strip()}:{ref_str}:{original_amount}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _load_cache() -> dict[str, Any]:
+    if not CACHE_FILE_PATH.exists():
+        return {}
+    try:
+        with open(CACHE_FILE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.warning("Failed to load extraction cache: %s", e)
+        return {}
+
+
+def _save_cache(cache_data: dict[str, Any]) -> None:
+    try:
+        CACHE_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(CACHE_FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(cache_data, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.warning("Failed to save extraction cache: %s", e)
 
 
 class _LLMExtractionSchema(BaseModel):
     """Intermediate schema for Gemini structured JSON output."""
     committed_amount: Optional[float] = Field(
         default=None,
-        description="Extracted amount; null if customer committed to full balance or amount is unspecified"
+        description="The numerical amount in INR that the customer promised to pay. If relative split is mentioned, calculate the proportional amount. If customer commits to full invoice without naming a number, leave null.",
     )
     split_pct: Optional[float] = Field(
         default=None,
-        description="Percentage of bill to be paid immediately (e.g., 50.0 for half, 60.0 for 60%); null if lump sum"
+        description="The percentage (0.0 to 100.0) of the invoice amount the customer committed to pay in the first installment, if a split/installment is promised.",
     )
     committed_date: Optional[str] = Field(
         default=None,
-        description="ISO date string (YYYY-MM-DD) for promised payment date; null if date is vague/unspecified"
+        description="The promised payment date in ISO format YYYY-MM-DD, resolved relative to REFERENCE_DATE. If vague or missing, leave null.",
     )
     confidence: float = Field(
         ...,
         ge=0.0,
         le=1.0,
-        description="Extraction confidence score between 0.0 and 1.0. Use < 0.70 for vague or ambiguous statements"
+        description="Confidence score between 0.0 and 1.0 reflecting extraction certainty.",
     )
     language_detected: str = Field(
         default="hinglish",
-        description="'hinglish', 'hindi', or 'english'"
+        description="Detected language of utterance ('hinglish', 'hindi', or 'english').",
     )
     extraction_notes: Optional[str] = Field(
         default=None,
-        description="Brief reasoning on how amount, date, and confidence were determined"
+        description="Brief explanation of parsing rationale, relative day calculations, or ambiguity notes.",
     )
 
 
-EXTRACTION_SYSTEM_PROMPT = """You are an expert financial intent extraction agent for Indian B2B & consumer invoices.
-Your job is to extract structured payment promises from customer speech transcripts in Hindi, English, or Code-mixed Hinglish.
+EXTRACTION_SYSTEM_PROMPT = """You are an expert financial intent extraction agent for Indian B2B and consumer invoice recovery.
+Your job is to analyze customer voice transcripts in Hindi, English, or Code-mixed Hinglish (in either Devanagari or Roman script) and extract structured payment promises accurately.
 
-CRITICAL EXTRACTION RULES:
-1. SCRIPT SUPPORT:
-   - Handle BOTH Devanagari script (e.g. 'भैया Monday तक 20000 भेज दूंगा', 'फैक्ट्री से पैसा आना है')
-   - AND Roman script Hinglish (e.g. 'Bhaiya kal tak 50 hazaar de dunga', 'I will clear by 25th').
+Rules:
+1. DUAL SCRIPT HINGLISH:
+   - Handle Roman script ('Bhaiya Monday tak 20000 de dunga', 'aaj shaam tak karta hoon', '50% abhi, baaki next week').
+   - Handle Devanagari script ('सोमवार तक बीस हज़ार दे दूँगा', 'पचास परसेंट अभी देता हूँ').
 
-2. DEFENSIVE DATE PARSING:
-   - If the customer names a concrete day or date (e.g., 'kal', 'parson', 'next Friday', 'Monday', '25th', '1 tarikh', 'Wednesday'), compute the exact ISO date (YYYY-MM-DD) relative to the provided REFERENCE_DATE.
-   - If the customer is VAGUE, CONFLICTING, or NON-COMMITTAL (e.g., 'agle hafte kisi din', 'baad me dekhte hain', 'Monday ya Tuesday pata nahi', 'abhi confirm nahi hai'), DO NOT GUESS A DATE. Set committed_date to null and assign confidence < 0.70.
+2. DEFENSIVE DATE RESOLUTION:
+   - Resolve relative days strictly relative to REFERENCE_DATE:
+     * 'aaj' / 'today' -> REFERENCE_DATE
+     * 'kal' / 'tomorrow' -> REFERENCE_DATE + 1 day
+     * 'parso' / 'day after tomorrow' -> REFERENCE_DATE + 2 days
+     * 'Monday tak' / 'agle somwar' -> nearest upcoming Monday on or after REFERENCE_DATE
+     * 'month end' / 'mahine ke aakhiri mein' -> last calendar day of the reference month
+   - If the date is vague (e.g. 'kuch dino mein', 'dekh ke bataunga', 'baad mein') -> set committed_date to null and confidence < 0.60.
 
 3. AMOUNT & SPLIT PARSING:
    - Understand Indian numbering conventions: '50 hazaar' = 50000, '1.2 lakh' = 120000, 'twenty thousand' = 20000, '₹15,000' = 15000.
@@ -82,39 +118,118 @@ CRITICAL EXTRACTION RULES:
 
 
 class CommitmentExtractor:
-    """Extracts payment commitment parameters from transcripts using Gemini."""
+    """Extracts payment commitment parameters from transcripts using Gemini or Groq."""
 
     def __init__(
         self,
         api_key: Optional[str] = None,
+        provider: Optional[str] = None,
         model_name: Optional[str] = None,
         temperature: float = 0.0,
+        use_cache: bool = True,
     ):
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        self.model_name = model_name or os.getenv("LLM_MODEL", "gemini-3.7-flash")
-        self.fallback_models = ["gemini-3.7-flash", "gemini-3.6-flash"]
+        self.provider = (provider or os.getenv("LLM_PROVIDER", "gemini")).lower()
+        self.use_cache = use_cache
         self.temperature = temperature
-        self._client: Optional[genai.Client] = None
 
-    def _get_client(self) -> genai.Client:
+        if self.provider == "groq":
+            self.api_key = api_key or os.getenv("GROQ_API_KEY")
+            self.model_name = model_name or os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+            self.fallback_models = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]
+        else:
+            self.provider = "gemini"
+            self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+            self.model_name = model_name or os.getenv("LLM_MODEL", "gemini-3.7-flash")
+            self.fallback_models = ["gemini-3.7-flash", "gemini-3.6-flash"]
+
+        self._client: Optional[genai.Client] = None
+        self._cache = _load_cache() if self.use_cache else {}
+
+    def _get_gemini_client(self) -> genai.Client:
         if self._client is None:
             if not self.api_key:
                 raise ValueError("GEMINI_API_KEY must be provided or set in environment")
             self._client = genai.Client(api_key=self.api_key)
         return self._client
 
-    def _call_llm(
+    def _call_groq(
         self,
         transcript: str,
         reference_date: date,
         original_amount: Optional[float] = None,
     ) -> tuple[dict[str, Any], str]:
-        """Calls Gemini with structured JSON output and automatic retry/fallback.
+        """Calls Groq with structured JSON output and fallback."""
+        if not self.api_key:
+            raise ValueError("GROQ_API_KEY must be provided or set in environment")
 
-        Returns:
-            Tuple of (extracted_dict, model_used_name)
-        """
-        client = self._get_client()
+        ref_str = f"{reference_date.isoformat()} ({reference_date.strftime('%A')})"
+        user_prompt = (
+            f"REFERENCE_DATE (Today): {ref_str}\n"
+            f"ORIGINAL_INVOICE_AMOUNT: {original_amount if original_amount is not None else 'Unknown'}\n"
+            f"TRANSCRIPT TO EXTRACT:\n\"\"\"{transcript}\"\"\""
+        )
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+
+        schema_hint = (
+            "\nOutput MUST be a JSON object with keys:\n"
+            "- committed_amount (float or null)\n"
+            "- split_pct (float or null)\n"
+            "- committed_date (YYYY-MM-DD string or null)\n"
+            "- confidence (float 0.0 to 1.0)\n"
+            "- language_detected ('hinglish', 'hindi', or 'english')\n"
+            "- extraction_notes (string)"
+        )
+
+        models_to_try = [self.model_name] + [m for m in self.fallback_models if m != self.model_name]
+        last_error = None
+
+        for model in models_to_try:
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": EXTRACTION_SYSTEM_PROMPT + schema_hint},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "temperature": self.temperature,
+                "response_format": {"type": "json_object"},
+            }
+
+            for attempt in range(3):
+                try:
+                    resp = requests.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers=headers,
+                        json=payload,
+                        timeout=30,
+                    )
+                    if resp.status_code == 200:
+                        content = resp.json()["choices"][0]["message"]["content"]
+                        parsed = json.loads(content)
+                        return parsed, model
+                    elif resp.status_code in (429, 503):
+                        time.sleep(1.0 * (attempt + 1))
+                        last_error = f"Groq HTTP {resp.status_code}: {resp.text}"
+                    else:
+                        last_error = f"Groq HTTP {resp.status_code}: {resp.text}"
+                        break
+                except Exception as e:
+                    last_error = e
+                    time.sleep(1.0 * (attempt + 1))
+
+        raise RuntimeError(f"All Groq model calls failed: {last_error}")
+
+    def _call_gemini(
+        self,
+        transcript: str,
+        reference_date: date,
+        original_amount: Optional[float] = None,
+    ) -> tuple[dict[str, Any], str]:
+        """Calls Gemini with structured JSON output and automatic retry/fallback."""
+        client = self._get_gemini_client()
 
         ref_str = f"{reference_date.isoformat()} ({reference_date.strftime('%A')})"
         user_prompt = (
@@ -130,19 +245,10 @@ class CommitmentExtractor:
             response_schema=_LLMExtractionSchema,
         )
 
-        # Attempt primary model first, fallback to alternatives on 503/server errors
         models_to_try = [self.model_name] + [m for m in self.fallback_models if m != self.model_name]
         last_error = None
 
         for model in models_to_try:
-            if model != self.model_name:
-                logger.warning(
-                    "[LLM Model Fallback Triggered] Primary model '%s' failed (error: %s). Attempting fallback to '%s'.",
-                    self.model_name,
-                    last_error,
-                    model,
-                )
-
             for attempt in range(4):
                 try:
                     response = client.models.generate_content(
@@ -152,12 +258,6 @@ class CommitmentExtractor:
                     )
                     raw_text = response.text.strip()
                     parsed = json.loads(raw_text)
-                    if model != self.model_name:
-                        logger.warning(
-                            "[LLM Model Fallback Succeeded] Successfully extracted commitment using fallback model '%s' instead of primary '%s'.",
-                            model,
-                            self.model_name,
-                        )
                     return parsed, model
                 except Exception as e:
                     last_error = e
@@ -168,9 +268,32 @@ class CommitmentExtractor:
                         time.sleep(1.0 * (attempt + 1))
                     else:
                         time.sleep(0.5 * (attempt + 1))
-            # Move to next fallback model if attempts failed
 
         raise RuntimeError(f"All Gemini extraction model calls failed: {last_error}")
+
+    def _call_llm(
+        self,
+        transcript: str,
+        reference_date: date,
+        original_amount: Optional[float] = None,
+    ) -> tuple[dict[str, Any], str]:
+        ref_str = f"{reference_date.isoformat()} ({reference_date.strftime('%A')})"
+        cache_key = _get_cache_key(self.provider, self.model_name, transcript, ref_str, original_amount)
+
+        if self.use_cache and cache_key in self._cache:
+            cached_val = self._cache[cache_key]
+            return cached_val["data"], cached_val["model"]
+
+        if self.provider == "groq":
+            data, model_used = self._call_groq(transcript, reference_date, original_amount)
+        else:
+            data, model_used = self._call_gemini(transcript, reference_date, original_amount)
+
+        if self.use_cache:
+            self._cache[cache_key] = {"data": data, "model": model_used}
+            _save_cache(self._cache)
+
+        return data, model_used
 
     def extract(
         self,

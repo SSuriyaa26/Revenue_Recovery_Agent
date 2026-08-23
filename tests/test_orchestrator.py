@@ -97,7 +97,7 @@ def test_orchestration_discount_exceeding_cap_escalates():
 
         assert result.policy_decision is not None
         assert result.policy_decision.get("decision") == "DENIED"
-        assert result.new_state == InvoiceStatus.ESCALATED_HUMAN.value
+        assert result.new_state == InvoiceStatus.OPEN.value
 
 
 def test_orchestration_low_confidence_routes_to_exception():

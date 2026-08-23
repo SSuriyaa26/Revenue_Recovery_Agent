@@ -1,0 +1,183 @@
+{
+  "p2p": {
+    "flow": "p2p",
+    "held_out_set_checksum": "e42295d2f02e989037288be30f712fbfd181d7c4b4dadb2f8cbc0d57211e44dc",
+    "policy_config_hash": "2a8f2e301da7b33680bcfc1eb516ec320732e9b28bf14809b3ef233f384c4a65",
+    "run_timestamp": "2026-08-23T17:08:54.222894",
+    "n_records": 35,
+    "recovery_rate": 0.3354,
+    "naive_baseline_recovery_rate": 0.2687,
+    "lift": 0.0667,
+    "cost_weighted_error_rate": 0.3429,
+    "cost_fp": 1.0,
+    "cost_fn": 4.0,
+    "exception_list": [
+      {
+        "record_id": "INV-HO-006",
+        "reason": "Customer commits to pay 60% of the 1.8\u202flakh invoice (\u20b9108,000) now; no specific payment date mentioned.",
+        "raw_input": "Dekho 1.8 lakh me se 60% abhi bhej sakta hoon, baaki salary aane ke baad. 1.08 lakh ka link bhejo."
+      },
+      {
+        "record_id": "INV-HO-007",
+        "reason": "Customer commits 40% of invoice (\u20b938,000) to be paid immediately (today) and requests payment link; remaining amount implied for 2 weeks later.",
+        "raw_input": "Toh 40% abhi, rest 2 hafte me. 38000 ka link de do please."
+      },
+      {
+        "record_id": "INV-HO-009",
+        "reason": "No extraction",
+        "raw_input": "Hmm payment... toh Monday... ya phir agle hafte kisi din... confirm karke batata hoon."
+      },
+      {
+        "record_id": "INV-HO-010",
+        "reason": "No extraction",
+        "raw_input": "Toh abhi scene ye hai ki... matlab kuch plan hai mera... next week dekhta hoon kya hota hai."
+      },
+      {
+        "record_id": "INV-HO-011",
+        "reason": "No extraction",
+        "raw_input": "Ye Wednesday tak ya Thursday tak... pata nahi exactly kab hoga but is hafte zaroor."
+      },
+      {
+        "record_id": "INV-HO-012",
+        "reason": "No extraction",
+        "raw_input": "48 hazaar bhejunga jaldi... kab? Wo toh batata hoon baad me."
+      },
+      {
+        "record_id": "INV-HO-013",
+        "reason": "No extraction",
+        "raw_input": "5000 bhejta hoon... wait 9000... actually 90000 hai na total? Confuse ho gaya."
+      },
+      {
+        "record_id": "INV-HO-014",
+        "reason": "No extraction",
+        "raw_input": "20 hazaar ya 35 hazaar... matlab mujhe 20 dena hai ya 35? Kya scene hai bhai?"
+      },
+      {
+        "record_id": "INV-HO-015",
+        "reason": "No extraction",
+        "raw_input": "Bhai abhi kuch nahi de sakta. Business down hai. Koi option nahi hai mere paas."
+      },
+      {
+        "record_id": "INV-HO-016",
+        "reason": "No extraction",
+        "raw_input": "Arey yaar ruk na. Agle mahine pakka de dunga. Mazaak nahi kar raha."
+      },
+      {
+        "record_id": "INV-HO-021",
+        "reason": "Customer promises to pay full invoice amount (2 lakh = 200,000) by Thursday, which is the reference date (2026-08-20). No split percentage mentioned; full payment implied. Commitment is clear and unambiguous.",
+        "raw_input": "2 lakh de dunga Thursday tak. Word of honor bhai."
+      },
+      {
+        "record_id": "INV-HO-022",
+        "reason": "Customer promises to pay full invoice amount (1.45 lakh) by Friday, which resolves to 2026-08-21 given reference date. Clear commitment, high confidence.",
+        "raw_input": "Friday tak 1.45 lakh aa jayega. Pehle bhi bola tha, is baar pakka hai."
+      },
+      {
+        "record_id": "INV-HO-023",
+        "reason": "Parsed amount 3.1 lakh = 310000.0; date phrase 'Monday tak' resolved to next Monday 2026-08-24; full invoice promised (no split specified).",
+        "raw_input": "3.1 lakh Monday tak. Main bol raha hoon na, ho jayega."
+      },
+      {
+        "record_id": "INV-HO-024",
+        "reason": "No extraction",
+        "raw_input": "78 hazaar de dunga next week. Phir se bol raha hoon, is baar final hai."
+      },
+      {
+        "record_id": "INV-HO-026",
+        "reason": "No extraction",
+        "raw_input": "4.3 lakh bahut zyada hai ek baar me. 70% discount de do toh abhi bhej deta hoon."
+      },
+      {
+        "record_id": "INV-HO-027",
+        "reason": "Customer promises 50% of invoice now (95,000) and requests payment link; remaining 50% to be paid in the first week of September, resolved to 2026-09-01. Clear split and date, high confidence.",
+        "raw_input": "Toh bhai 50% abhi 50% baad me. 95000 ka link bhej do. Baaki September first week."
+      },
+      {
+        "record_id": "INV-HO-029",
+        "reason": "No extraction",
+        "raw_input": "99 hazaar de dunga bhai. Kab? Toh agle hafte... Monday ya Tuesday... dekhta hoon."
+      },
+      {
+        "record_id": "INV-HO-035",
+        "reason": "No extraction",
+        "raw_input": "1.75 lakh toh de dunga par 50% discount milega toh abhi kar deta hoon warna regular schedule pe."
+      }
+    ],
+    "guardrail_test_results": "PASS",
+    "idempotency_test_results": "PASS"
+  },
+  "payment_failure": {
+    "flow": "payment_failure",
+    "held_out_set_checksum": "85626a71b79ca845bccd7ede1e7ce5aa4efa2fc65c7a69554e9d2e88d8f2f101",
+    "policy_config_hash": "2a8f2e301da7b33680bcfc1eb516ec320732e9b28bf14809b3ef233f384c4a65",
+    "run_timestamp": "2026-08-23T17:08:54.224123",
+    "n_records": 35,
+    "recovery_rate": 0.8727,
+    "naive_baseline_recovery_rate": 0.1933,
+    "lift": 0.6794,
+    "cost_weighted_error_rate": 0.2286,
+    "cost_fp": 1.0,
+    "cost_fn": 4.0,
+    "exception_list": [
+      {
+        "record_id": "EVT-HO-010",
+        "reason": "Classified as insufficient_funds (peak=False)",
+        "raw_input": "Failure: BALANCE_LOW at 2026-08-26T14:30:00+05:30"
+      },
+      {
+        "record_id": "EVT-HO-014",
+        "reason": "Classified as technical (peak=True)",
+        "raw_input": "Failure: BANK_DECLINE_5xx at 2026-08-20T21:30:00+05:30"
+      },
+      {
+        "record_id": "EVT-HO-015",
+        "reason": "Classified as technical (peak=True)",
+        "raw_input": "Failure: BANK_SERVER_ERROR at 2026-08-20T22:15:00+05:30"
+      },
+      {
+        "record_id": "EVT-HO-016",
+        "reason": "Classified as insufficient_funds (peak=False)",
+        "raw_input": "Failure: INSUFFICIENT_BALANCE at 2026-08-29T09:00:00+05:30"
+      },
+      {
+        "record_id": "EVT-HO-017",
+        "reason": "Classified as other (peak=False)",
+        "raw_input": "Failure: MANDATE_DECLINED at 2026-08-27T11:00:00+05:30"
+      },
+      {
+        "record_id": "EVT-HO-018",
+        "reason": "Classified as other (peak=False)",
+        "raw_input": "Failure: UNKNOWN_ERROR_99 at 2026-08-22T15:45:00+05:30"
+      },
+      {
+        "record_id": "EVT-HO-019",
+        "reason": "Classified as other (peak=False)",
+        "raw_input": "Failure: PROCESSING_ERROR at 2026-08-23T08:00:00+05:30"
+      },
+      {
+        "record_id": "EVT-HO-020",
+        "reason": "Classified as other (peak=False)",
+        "raw_input": "Failure: UNCLASSIFIED_FAILURE at 2026-08-24T12:00:00+05:30"
+      },
+      {
+        "record_id": "EVT-HO-021",
+        "reason": "Classified as technical (peak=False)",
+        "raw_input": "Failure: TIMEOUT_UNKNOWN at 2026-08-25T17:30:00+05:30"
+      },
+      {
+        "record_id": "EVT-HO-029",
+        "reason": "Classified as other (peak=False)",
+        "raw_input": "Failure: INTERNAL_ERROR at 2026-08-26T16:00:00+05:30"
+      },
+      {
+        "record_id": "EVT-HO-033",
+        "reason": "Classified as technical (peak=False)",
+        "raw_input": "Failure: BANK_DECLINE_GENERIC at 2026-08-23T19:00:00+05:30"
+      }
+    ],
+    "guardrail_test_results": "PASS",
+    "idempotency_test_results": "PASS"
+  },
+  "generated_at": "2026-08-23T17:08:54.224212",
+  "llm_provider": "groq"
+}
