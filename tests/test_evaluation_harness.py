@@ -109,3 +109,28 @@ def test_scoring_and_evaluation_result_contract():
     assert result.exception_list[0].record_id == "INV-3"
     assert result.guardrail_test_results == "PASS"
     assert result.idempotency_test_results == "PASS"
+    assert result.lift_ci_lower is not None
+    assert result.lift_ci_upper is not None
+    assert result.lift_ci_lower <= result.lift <= result.lift_ci_upper
+    assert result.ci_method == "paired_bootstrap_95"
+
+
+def test_bootstrap_ci_computation():
+    from evaluation_harness import compute_bootstrap_ci
+    ground_truth = [{"original_amount": 100.0} for _ in range(20)]
+    system_actions = [{"recovered_amount": 80.0} for _ in range(20)]
+    baseline_actions = [{"recovered_amount": 40.0} for _ in range(20)]
+
+    ci = compute_bootstrap_ci(
+        system_actions=system_actions,
+        baseline_actions=baseline_actions,
+        ground_truth_records=ground_truth,
+        n_resamples=500,
+        random_seed=42
+    )
+
+    # When all samples are identical 80 vs 40, lift is exactly 0.40 across all resamples
+    assert ci["lift_ci"][0] == 0.40
+    assert ci["lift_ci"][1] == 0.40
+    assert ci["recovery_rate_ci"][0] == 0.80
+    assert ci["recovery_rate_ci"][1] == 0.80

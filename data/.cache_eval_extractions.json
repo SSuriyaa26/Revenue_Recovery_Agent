@@ -394,5 +394,16 @@
       "extraction_notes": "Customer states they will pay the full invoice (1.75 lakh) but only if a 50% discount is given; otherwise payment will follow the regular schedule. No explicit payment date is provided, making the commitment conditional and vague, resulting in lower confidence."
     },
     "model": "openai/gpt-oss-120b"
+  },
+  "88b639113af5be60c6933d7258671cf5d66a41bb9b756d2c2490428fe7535264": {
+    "data": {
+      "committed_amount": 150000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-24",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer explicitly committed to pay 1.5 lakh (150000 INR) by Monday. Since REFERENCE_DATE is 2026-08-24 (Monday), committed_date is resolved to 2026-08-24."
+    },
+    "model": "gemini-3.6-flash"
   }
 }

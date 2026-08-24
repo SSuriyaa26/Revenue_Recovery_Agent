@@ -41,6 +41,64 @@ DATA_DIR = PROJECT_ROOT / "data"
 CHECKSUMS_FILE = DATA_DIR / "checksums.json"
 
 
+def compute_bootstrap_ci(
+    system_actions: list[dict[str, Any]],
+    baseline_actions: list[dict[str, Any]],
+    ground_truth_records: list[dict[str, Any]],
+    n_resamples: int = 2000,
+    alpha: float = 0.05,
+    random_seed: int = 42,
+) -> dict[str, tuple[float, float]]:
+    """Computes non-parametric 95% paired bootstrap confidence intervals for Lift and Recovery Rate.
+
+    Uses deterministic seed for exact reproducibility across evaluation runs.
+    """
+    import random
+    rng = random.Random(random_seed)
+    n = len(ground_truth_records)
+    if n == 0:
+        return {
+            "lift_ci": (0.0, 0.0),
+            "recovery_rate_ci": (0.0, 0.0),
+            "baseline_rate_ci": (0.0, 0.0),
+        }
+
+    lifts: list[float] = []
+    recovery_rates: list[float] = []
+    baseline_rates: list[float] = []
+
+    for _ in range(n_resamples):
+        sample_indices = [rng.randint(0, n - 1) for _ in range(n)]
+        tot_orig = sum(
+            float(ground_truth_records[i].get("original_amount", ground_truth_records[i].get("amount", 0.0)))
+            for i in sample_indices
+        )
+        tot_sys = sum(float(system_actions[i].get("recovered_amount", 0.0)) for i in sample_indices)
+        tot_base = sum(float(baseline_actions[i].get("recovered_amount", 0.0)) for i in sample_indices)
+
+        r_sys = (tot_sys / tot_orig) if tot_orig > 0 else 0.0
+        r_base = (tot_base / tot_orig) if tot_orig > 0 else 0.0
+
+        recovery_rates.append(r_sys)
+        baseline_rates.append(r_base)
+        lifts.append(r_sys - r_base)
+
+    lifts.sort()
+    recovery_rates.sort()
+    baseline_rates.sort()
+
+    low_idx = int((alpha / 2.0) * n_resamples)
+    high_idx = int((1.0 - (alpha / 2.0)) * n_resamples)
+    low_idx = max(0, min(low_idx, n_resamples - 1))
+    high_idx = max(0, min(high_idx, n_resamples - 1))
+
+    return {
+        "lift_ci": (round(lifts[low_idx], 4), round(lifts[high_idx], 4)),
+        "recovery_rate_ci": (round(recovery_rates[low_idx], 4), round(recovery_rates[high_idx], 4)),
+        "baseline_rate_ci": (round(baseline_rates[low_idx], 4), round(baseline_rates[high_idx], 4)),
+    }
+
+
 class EvaluationHarness:
     """Batch Evaluation Harness for AI Revenue Recovery Agent."""
 
@@ -115,9 +173,9 @@ class EvaluationHarness:
 
             # Check if record has explicit requested discount
             requested_discount = None
-            if "discount" in raw_input.lower() or "percent" in raw_input.lower() or "%" in raw_input:
+            if "discount" in raw_input.lower() or "chhut" in raw_input.lower() or "off" in raw_input.lower():
                 import re
-                m = re.search(r"(\d+)\s*%", raw_input)
+                m = re.search(r"(\d+)\s*(?:%|percent)", raw_input, re.IGNORECASE)
                 if m:
                     requested_discount = float(m.group(1))
 
@@ -213,7 +271,6 @@ class EvaluationHarness:
             orig_amt = float(rec.get("original_amount", 50000.0))
 
             # Run through Perception Gateway
-            # In adversarial cases, payload attempts to inject negative amount, 90% discount, or system override
             test_payload = {
                 "raw_transcript": raw_input,
                 "confidence": 0.95,
@@ -360,7 +417,7 @@ class EvaluationHarness:
         adversarial_actions: list[dict[str, Any]],
         held_out_checksum: str,
     ) -> EvaluationResult:
-        """Computes all quantitative evaluation metrics."""
+        """Computes all quantitative evaluation metrics including 95% Bootstrap CI."""
         n_records = len(ground_truth_records)
         total_original_amt = sum(float(r.get("original_amount", r.get("amount", 0.0))) for r in ground_truth_records)
         total_system_recovered = sum(float(a["recovered_amount"]) for a in system_actions)
@@ -369,6 +426,18 @@ class EvaluationHarness:
         recovery_rate = (total_system_recovered / total_original_amt) if total_original_amt > 0 else 0.0
         baseline_rate = (total_baseline_recovered / total_original_amt) if total_original_amt > 0 else 0.0
         lift = recovery_rate - baseline_rate
+
+        # 95% Paired Bootstrap Confidence Intervals for Lift and Recovery Rate
+        ci_dict = compute_bootstrap_ci(
+            system_actions=system_actions,
+            baseline_actions=baseline_actions,
+            ground_truth_records=ground_truth_records,
+            n_resamples=2000,
+            alpha=0.05,
+            random_seed=42,
+        )
+        lift_ci_low, lift_ci_high = ci_dict["lift_ci"]
+        rec_ci_low, rec_ci_high = ci_dict["recovery_rate_ci"]
 
         # Cost-weighted error rate: (w_FP * FP + w_FN * FN) / N
         w_fp = self.policy_config.cost_fp
@@ -402,6 +471,11 @@ class EvaluationHarness:
             recovery_rate=round(recovery_rate, 4),
             naive_baseline_recovery_rate=round(baseline_rate, 4),
             lift=round(lift, 4),
+            lift_ci_lower=lift_ci_low,
+            lift_ci_upper=lift_ci_high,
+            recovery_rate_ci_lower=rec_ci_low,
+            recovery_rate_ci_upper=rec_ci_high,
+            ci_method="paired_bootstrap_95",
             cost_weighted_error_rate=round(cost_weighted_error, 4),
             cost_fp=w_fp,
             cost_fn=w_fn,
@@ -435,6 +509,9 @@ class EvaluationHarness:
 
     def report(self, p2p_res: EvaluationResult, pf_res: EvaluationResult) -> str:
         """Generates scorecard report per SPEC §8.3 and saves timestamped JSON artifact."""
+        p2p_ci_str = f"[{p2p_res.lift_ci_lower*100:+.1f}%, {p2p_res.lift_ci_upper*100:+.1f}%]" if p2p_res.lift_ci_lower is not None else "N/A"
+        pf_ci_str = f"[{pf_res.lift_ci_lower*100:+.1f}%, {pf_res.lift_ci_upper*100:+.1f}%]" if pf_res.lift_ci_lower is not None else "N/A"
+
         table = [
             "=" * 85,
             "                   AI REVENUE RECOVERY AGENT — EVALUATION SCORECARD",
@@ -444,6 +521,7 @@ class EvaluationHarness:
             f"{'Recovery Rate':<32} | {p2p_res.recovery_rate * 100:>21.1f}% | {pf_res.recovery_rate * 100:>21.1f}%",
             f"{'Naive Baseline Recovery Rate':<32} | {p2p_res.naive_baseline_recovery_rate * 100:>21.1f}% | {pf_res.naive_baseline_recovery_rate * 100:>21.1f}%",
             f"{'Absolute Lift over Baseline':<32} | {p2p_res.lift * 100:>+20.1f}% | {pf_res.lift * 100:>+20.1f}%",
+            f"{'  └ 95% CI (Paired Bootstrap)':<32} | {p2p_ci_str:>22} | {pf_ci_str:>22}",
             f"{'Cost-Weighted Error Rate':<32} | {p2p_res.cost_weighted_error_rate:>22.3f} | {pf_res.cost_weighted_error_rate:>22.3f}",
             f"{'Exception Count / Held-Out N':<32} | {f'{len(p2p_res.exception_list)} / {p2p_res.n_records}':>22} | {f'{len(pf_res.exception_list)} / {pf_res.n_records}':>22}",
             f"{'Guardrail Tests (Adversarial)':<32} | {p2p_res.guardrail_test_results:>22} | {pf_res.guardrail_test_results:>22}",
@@ -452,6 +530,7 @@ class EvaluationHarness:
             f"PolicyConfig Hash: {p2p_res.policy_config_hash[:16]}... (Reproducible P0 Gate 7)",
             f"P2P Held-Out Checksum: {p2p_res.held_out_set_checksum[:16]}...",
             f"PF Held-Out Checksum:  {pf_res.held_out_set_checksum[:16]}...",
+            f"CI Method: Paired Bootstrap (B=2000, seed=42, 95% Confidence)",
             "=" * 85,
         ]
         scorecard_text = "\n".join(table)

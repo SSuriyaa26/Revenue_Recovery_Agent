@@ -3,25 +3,20 @@
     "flow": "p2p",
     "held_out_set_checksum": "e42295d2f02e989037288be30f712fbfd181d7c4b4dadb2f8cbc0d57211e44dc",
     "policy_config_hash": "2a8f2e301da7b33680bcfc1eb516ec320732e9b28bf14809b3ef233f384c4a65",
-    "run_timestamp": "2026-08-23T17:10:19.211372",
+    "run_timestamp": "2026-08-24T10:47:30.183765",
     "n_records": 35,
-    "recovery_rate": 0.3354,
+    "recovery_rate": 0.4191,
     "naive_baseline_recovery_rate": 0.2687,
-    "lift": 0.0667,
-    "cost_weighted_error_rate": 0.3429,
+    "lift": 0.1504,
+    "cost_weighted_error_rate": 0.0,
     "cost_fp": 1.0,
     "cost_fn": 4.0,
+    "lift_ci_lower": 0.0584,
+    "lift_ci_upper": 0.2804,
+    "recovery_rate_ci_lower": 0.2538,
+    "recovery_rate_ci_upper": 0.6176,
+    "ci_method": "paired_bootstrap_95",
     "exception_list": [
-      {
-        "record_id": "INV-HO-006",
-        "reason": "Customer commits to pay 60% of the 1.8\u202flakh invoice (\u20b9108,000) now; no specific payment date mentioned.",
-        "raw_input": "Dekho 1.8 lakh me se 60% abhi bhej sakta hoon, baaki salary aane ke baad. 1.08 lakh ka link bhejo."
-      },
-      {
-        "record_id": "INV-HO-007",
-        "reason": "Customer commits 40% of invoice (\u20b938,000) to be paid immediately (today) and requests payment link; remaining amount implied for 2 weeks later.",
-        "raw_input": "Toh 40% abhi, rest 2 hafte me. 38000 ka link de do please."
-      },
       {
         "record_id": "INV-HO-009",
         "reason": "No extraction",
@@ -88,11 +83,6 @@
         "raw_input": "4.3 lakh bahut zyada hai ek baar me. 70% discount de do toh abhi bhej deta hoon."
       },
       {
-        "record_id": "INV-HO-027",
-        "reason": "Customer promises 50% of invoice now (95,000) and requests payment link; remaining 50% to be paid in the first week of September, resolved to 2026-09-01. Clear split and date, high confidence.",
-        "raw_input": "Toh bhai 50% abhi 50% baad me. 95000 ka link bhej do. Baaki September first week."
-      },
-      {
         "record_id": "INV-HO-029",
         "reason": "No extraction",
         "raw_input": "99 hazaar de dunga bhai. Kab? Toh agle hafte... Monday ya Tuesday... dekhta hoon."
@@ -110,7 +100,7 @@
     "flow": "payment_failure",
     "held_out_set_checksum": "85626a71b79ca845bccd7ede1e7ce5aa4efa2fc65c7a69554e9d2e88d8f2f101",
     "policy_config_hash": "2a8f2e301da7b33680bcfc1eb516ec320732e9b28bf14809b3ef233f384c4a65",
-    "run_timestamp": "2026-08-23T17:10:19.213018",
+    "run_timestamp": "2026-08-24T10:47:30.256220",
     "n_records": 35,
     "recovery_rate": 0.8727,
     "naive_baseline_recovery_rate": 0.1933,
@@ -118,6 +108,11 @@
     "cost_weighted_error_rate": 0.2286,
     "cost_fp": 1.0,
     "cost_fn": 4.0,
+    "lift_ci_lower": 0.377,
+    "lift_ci_upper": 0.8261,
+    "recovery_rate_ci_lower": 0.7234,
+    "recovery_rate_ci_upper": 0.9489,
+    "ci_method": "paired_bootstrap_95",
     "exception_list": [
       {
         "record_id": "EVT-HO-010",
@@ -178,6 +173,6 @@
     "guardrail_test_results": "PASS",
     "idempotency_test_results": "PASS"
   },
-  "generated_at": "2026-08-23T17:10:19.213126",
+  "generated_at": "2026-08-24T10:47:30.256363",
   "llm_provider": "groq"
 }
