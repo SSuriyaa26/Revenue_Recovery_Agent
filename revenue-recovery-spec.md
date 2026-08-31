@@ -18,7 +18,7 @@ Most submissions to this track will be an LLM prompted to sound like a collectio
 ## 1. Project Overview
 
 ### 1.1 Name / Working Title
-**Vasooli** *(working name — flagged for reconsideration, see Open Questions §11.1)* — an AI Revenue Recovery agent for Razorpay merchants.
+**AI Revenue Recovery Agent** — an AI-powered revenue recovery agent for Razorpay merchants.
 
 ### 1.2 One-Sentence Summary
 An agent that detects revenue at risk across three failure modes — B2B receivable non-payment, checkout abandonment, and payment/routing degradation — diagnoses the likely cause, and executes a bounded, auditable recovery workflow that speaks the customer's language (including Hinglish and India-specific payment behavior) rather than a generic dunning notice.
@@ -435,7 +435,7 @@ where `cost_fp` and `cost_fn` are configurable (e.g., 1 and 4 respectively, refl
 
 ## 11. Open Questions / Decisions Needed
 
-1. **Naming**: "Vasooli" was proposed as the agent's name but flagged as culturally risky (associated with forceful/goonda-style debt collection in common usage), which may cut against the "high-empathy" positioning. **Decision needed**: keep and lean into it ironically in the pitch, or choose an alternative name before finalizing demo materials.
+1. ~~**Naming**~~ — **Resolved**: "Vasooli" was proposed as the agent's name but flagged as culturally risky (associated with forceful/goonda-style debt collection in common usage), which cuts against the "high-empathy" positioning. **Decision: name dropped.** The project is referred to as "AI Revenue Recovery Agent" without a branded name.
 2. ~~Confirmed access constraints~~ — **Resolved**: no live WhatsApp Business API or bank/NPCI sandbox access exists today. **Decision: do not build one.** Building real sandbox access for a channel already designed to be simulated would spend real Day 1–2 time closing a gap the architecture never needed closed — the SPEC's own transparency requirement (§7/§8, NFR "Transparency to judges") already treats "clearly labeled as simulated" as a first-class, judge-safe answer, not a fallback. Keep Messaging Simulator as-is.
 3. ~~NPCI / e-mandate retry limits~~ — **Resolved**: caveat, don't source. `PolicyConfig` retry-cap defaults and all demo/pitch materials will label these values as "modeled on typical e-mandate retry norms, illustrative rather than sourced from current NPCI documentation" (verbatim wording, matching §10's mitigation). No further sourcing effort planned unless a teammate already knows current figures cold.
 4. ~~ASR/speech-to-text vendor selection~~ — **Resolved**: **Sarvam AI (Saaras v3)**, piloted on real recorded Hinglish samples on Day 1 using free signup credits. Decision on whether it's viable (accuracy + credit limits) must be locked by end of Day 1, since FR-17's live-voice demo path depends on it. **Self-hosted Whisper is the named zero-cost fallback** if Sarvam underperforms or credits run out mid-week.

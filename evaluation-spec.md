@@ -1,4 +1,4 @@
-# Vasooli — Evaluation Specification (EDD)
+# AI Revenue Recovery Agent — Evaluation Specification (EDD)
 
 **Document Info**
 | Field | Value |

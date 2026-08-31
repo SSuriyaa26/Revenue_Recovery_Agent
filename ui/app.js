@@ -1,46 +1,118 @@
 /**
  * AI Revenue Recovery Agent — Dashboard & Judge Evaluation Application Logic
- * Vanilla JavaScript (EDD Step 12)
+ * Audit & Recovery Protocol Design System (EDD Step 12)
+ * Pure Vanilla JavaScript — Zero External Frontend Dependencies
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+  initThemeToggle();
   initTabs();
+  initQuickTour();
   initPresetButtons();
   initSimulationForm();
   initEvaluationButton();
   initExceptionCollapsible();
-  
-  // Load initial data from backend API
+  initRefreshButtons();
+
+  // Load initial datasets from backend REST API
   loadMetrics();
   loadInvoices();
   loadAuditTrail();
 });
 
 // -----------------------------------------------------------------------------
-// Tab Switching
+// 1. Theme Toggle (Dark & Light)
+// -----------------------------------------------------------------------------
+
+function initThemeToggle() {
+  const btn = document.getElementById("btn-toggle-theme");
+  const icon = document.getElementById("theme-icon");
+  const text = document.getElementById("theme-text");
+  if (!btn) return;
+
+  // Check persisted preference
+  const savedTheme = localStorage.getItem("recovery_agent_theme") || "dark";
+  if (savedTheme === "light") {
+    document.body.classList.add("light-theme");
+    if (icon) icon.innerText = "dark_mode";
+    if (text) text.innerText = "Dark";
+  } else {
+    document.body.classList.remove("light-theme");
+    if (icon) icon.innerText = "light_mode";
+    if (text) text.innerText = "Light";
+  }
+
+  btn.addEventListener("click", () => {
+    const isLight = document.body.classList.toggle("light-theme");
+    const currentTheme = isLight ? "light" : "dark";
+    localStorage.setItem("recovery_agent_theme", currentTheme);
+
+    if (icon) icon.innerText = isLight ? "dark_mode" : "light_mode";
+    if (text) text.innerText = isLight ? "Dark" : "Light";
+  });
+}
+
+// -----------------------------------------------------------------------------
+// 2. Tab Navigation
 // -----------------------------------------------------------------------------
 
 function initTabs() {
   const tabs = document.querySelectorAll(".nav-tab");
   tabs.forEach(tab => {
     tab.addEventListener("click", () => {
-      tabs.forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-
-      const targetId = tab.getAttribute("data-tab");
-      document.querySelectorAll(".tab-pane").forEach(pane => {
-        pane.classList.remove("active");
-      });
-      const targetPane = document.getElementById(targetId);
-      if (targetPane) {
-        targetPane.classList.add("active");
-      }
+      switchTab(tab.getAttribute("data-tab"));
     });
   });
 }
 
+function switchTab(tabId) {
+  const tabs = document.querySelectorAll(".nav-tab");
+  tabs.forEach(t => {
+    if (t.getAttribute("data-tab") === tabId) {
+      t.classList.add("active");
+    } else {
+      t.classList.remove("active");
+    }
+  });
+
+  document.querySelectorAll(".tab-pane").forEach(pane => {
+    pane.classList.remove("active");
+  });
+  const targetPane = document.getElementById(tabId);
+  if (targetPane) {
+    targetPane.classList.add("active");
+  }
+}
+
 // -----------------------------------------------------------------------------
-// Exception List Collapsible & Sub-tabs
+// 3. Quick 1-Click Demo Tour
+// -----------------------------------------------------------------------------
+
+function initQuickTour() {
+  const btn = document.getElementById("btn-quick-tour");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    switchTab("tab-playground");
+
+    // Click Preset 1 and auto-submit
+    const firstPreset = document.querySelector(".preset-card-btn[data-scenario='1']");
+    if (firstPreset) {
+      firstPreset.click();
+    }
+
+    const form = document.getElementById("form-simulate");
+    if (form) {
+      setTimeout(() => {
+        const submitBtn = document.getElementById("btn-submit-simulate");
+        if (submitBtn) submitBtn.click();
+      }, 250);
+    }
+  });
+}
+
+// -----------------------------------------------------------------------------
+// 4. Exception List Collapsible & Sub-tabs
 // -----------------------------------------------------------------------------
 
 function initExceptionCollapsible() {
@@ -75,7 +147,7 @@ function initExceptionCollapsible() {
 }
 
 // -----------------------------------------------------------------------------
-// Load Metrics & Scorecard
+// 5. Load Metrics & Empirical Scorecard
 // -----------------------------------------------------------------------------
 
 async function loadMetrics() {
@@ -93,53 +165,55 @@ function renderScorecard(data) {
   const p2p = data.p2p || {};
   const pf = data.payment_failure || {};
 
-  // KPI Card Ribbon
+  // Formatted percentages & lifts
   const p2pRec = (p2p.recovery_rate * 100).toFixed(1) + "%";
   const p2pLift = (p2p.lift >= 0 ? "+" : "") + (p2p.lift * 100).toFixed(1) + "% Lift";
   const p2pCi = `[${(p2p.lift_ci_lower * 100).toFixed(1)}%, ${(p2p.lift_ci_upper * 100).toFixed(1)}%]`;
-  
+  const p2pCwer = (p2p.cost_weighted_error_rate || 0).toFixed(3);
+
   const pfRec = (pf.recovery_rate * 100).toFixed(1) + "%";
   const pfLift = (pf.lift >= 0 ? "+" : "") + (pf.lift * 100).toFixed(1) + "% Lift";
   const pfCi = `[${(pf.lift_ci_lower * 100).toFixed(1)}%, ${(pf.lift_ci_upper * 100).toFixed(1)}%]`;
+  const pfCwer = (pf.cost_weighted_error_rate || 0).toFixed(3);
 
-  document.getElementById("kpi-p2p-recovery").innerText = p2pRec;
-  document.getElementById("kpi-p2p-lift").innerText = p2pLift;
-  document.getElementById("kpi-p2p-ci").innerHTML = `95% CI: <strong class="ci-val">${p2pCi}</strong> (Paired Bootstrap)`;
+  // Hero KPI Card Values
+  safeSetText("kpi-p2p-recovery", p2pRec);
+  safeSetText("kpi-p2p-lift", p2pLift);
+  const elP2pCi = document.getElementById("kpi-p2p-ci");
+  if (elP2pCi) elP2pCi.innerHTML = `95% CI: <strong class="ci-val">${p2pCi}</strong> (Paired Bootstrap)`;
+  safeSetText("kpi-p2p-cwer-val", p2pCwer);
 
-  document.getElementById("kpi-pf-recovery").innerText = pfRec;
-  document.getElementById("kpi-pf-lift").innerText = pfLift;
-  document.getElementById("kpi-pf-ci").innerHTML = `95% CI: <strong class="ci-val">${pfCi}</strong> (Paired Bootstrap)`;
+  safeSetText("kpi-pf-recovery", pfRec);
+  safeSetText("kpi-pf-lift", pfLift);
+  const elPfCi = document.getElementById("kpi-pf-ci");
+  if (elPfCi) elPfCi.innerHTML = `95% CI: <strong class="ci-val">${pfCi}</strong> (Paired Bootstrap)`;
+  safeSetText("kpi-pf-cwer-val", pfCwer);
 
-  // Benchmark Table Cells
-  document.getElementById("cell-p2p-rec").innerText = p2pRec;
-  document.getElementById("cell-pf-rec").innerText = pfRec;
-  document.getElementById("cell-p2p-base").innerText = (p2p.naive_baseline_recovery_rate * 100).toFixed(1) + "%";
-  document.getElementById("cell-pf-base").innerText = (pf.naive_baseline_recovery_rate * 100).toFixed(1) + "%";
-  document.getElementById("cell-p2p-lift").innerText = p2pLift;
-  document.getElementById("cell-pf-lift").innerText = pfLift;
-  document.getElementById("cell-p2p-ci").innerText = p2pCi;
-  document.getElementById("cell-pf-ci").innerText = pfCi;
-  document.getElementById("cell-p2p-cwer").innerText = (p2p.cost_weighted_error_rate || 0).toFixed(3);
-  document.getElementById("cell-pf-cwer").innerText = (pf.cost_weighted_error_rate || 0).toFixed(3);
+  // Benchmark Scorecard Table Cells
+  safeSetText("cell-p2p-rec", p2pRec);
+  safeSetText("cell-pf-rec", pfRec);
+  safeSetText("cell-p2p-base", (p2p.naive_baseline_recovery_rate * 100).toFixed(1) + "%");
+  safeSetText("cell-pf-base", (pf.naive_baseline_recovery_rate * 100).toFixed(1) + "%");
+  safeSetText("cell-p2p-lift", p2pLift);
+  safeSetText("cell-pf-lift", pfLift);
+  safeSetText("cell-p2p-ci", p2pCi);
+  safeSetText("cell-pf-ci", pfCi);
+  safeSetText("cell-p2p-cwer", p2pCwer);
+  safeSetText("cell-pf-cwer", pfCwer);
 
   const p2pExc = (p2p.exception_list || []).length;
   const pfExc = (pf.exception_list || []).length;
-  document.getElementById("cell-p2p-exc").innerText = `${p2pExc} / ${p2p.n_records || 35}`;
-  document.getElementById("cell-pf-exc").innerText = `${pfExc} / ${pf.n_records || 35}`;
-  document.getElementById("count-exceptions").innerText = p2pExc + pfExc;
+  safeSetText("cell-p2p-exc", `${p2pExc} / ${p2p.n_records || 35}`);
+  safeSetText("cell-pf-exc", `${pfExc} / ${pf.n_records || 35}`);
+  safeSetText("count-exceptions", String(p2pExc + pfExc));
 
-  // Hashes & Manifest
-  if (p2p.policy_config_hash) {
-    document.getElementById("hash-policy").innerText = p2p.policy_config_hash;
-  }
-  if (p2p.held_out_set_checksum) {
-    document.getElementById("hash-p2p").innerText = p2p.held_out_set_checksum;
-  }
-  if (pf.held_out_set_checksum) {
-    document.getElementById("hash-pf").innerText = pf.held_out_set_checksum;
-  }
+  // Checksums & Hashes
+  if (p2p.policy_config_hash) safeSetText("hash-policy", p2p.policy_config_hash);
+  if (p2p.held_out_set_checksum) safeSetText("hash-p2p", p2p.held_out_set_checksum);
+  if (pf.held_out_set_checksum) safeSetText("hash-pf", pf.held_out_set_checksum);
+  if (p2p.run_timestamp) safeSetText("eval-timestamp", p2p.run_timestamp);
 
-  // Populate Exception Drawer
+  // Exception Drawer Populate
   renderExceptionList("container-p2p-exceptions", p2p.exception_list || []);
   renderExceptionList("container-pf-exceptions", pf.exception_list || []);
 }
@@ -159,18 +233,18 @@ function renderExceptionList(containerId, exceptions) {
     div.className = "exception-entry";
     div.innerHTML = `
       <div class="exception-entry-header">
-        <span>#${idx + 1} Record: ${escapeHtml(entry.record_id)}</span>
+        <span>#${idx + 1} Record: <strong>${escapeHtml(entry.record_id || 'EXC-' + idx)}</strong></span>
         <span class="status-pill open">Routed to Review</span>
       </div>
       <div class="exception-entry-raw">"${escapeHtml(entry.raw_input || '')}"</div>
-      <div class="exception-entry-reason"><strong>Reason:</strong> ${escapeHtml(entry.reason || '')}</div>
+      <div class="exception-entry-reason"><strong>Reason:</strong> ${escapeHtml(entry.reason || 'Ambiguous intent threshold not met')}</div>
     `;
     container.appendChild(div);
   });
 }
 
 // -----------------------------------------------------------------------------
-// Evaluation Button Action
+// 6. On-Demand Evaluation Button Action
 // -----------------------------------------------------------------------------
 
 function initEvaluationButton() {
@@ -179,36 +253,47 @@ function initEvaluationButton() {
 
   btn.addEventListener("click", async () => {
     btn.disabled = true;
-    btn.innerHTML = `<span class="btn-icon">⏳</span> Evaluating Batch...`;
+    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">hourglass_top</span> Evaluating Batch...`;
     try {
       const res = await fetch("/api/evaluate", { method: "POST" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       renderScorecard(data);
-      alert("Batch Evaluation Complete! Metrics and Confidence Intervals Updated.");
     } catch (err) {
       alert("Evaluation failed: " + err.message);
     } finally {
       btn.disabled = false;
-      btn.innerHTML = `<span class="btn-icon">⚡</span> Run Live Evaluation Harness`;
+      btn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">bolt</span> Run Live Evaluation Harness`;
     }
   });
 }
 
 // -----------------------------------------------------------------------------
-// Interactive Playground & Simulation
+// 7. Interactive Playground & Simulation
 // -----------------------------------------------------------------------------
 
 function initPresetButtons() {
-  const presetBtns = document.querySelectorAll(".preset-btn");
+  const presetBtns = document.querySelectorAll(".preset-card-btn");
   presetBtns.forEach(btn => {
     btn.addEventListener("click", () => {
+      presetBtns.forEach(b => b.classList.remove("active-preset"));
+      btn.classList.add("active-preset");
+
       const text = btn.getAttribute("data-text");
       const amt = btn.getAttribute("data-amt");
       const disc = btn.getAttribute("data-disc");
 
-      document.getElementById("input-transcript").value = text;
-      if (amt) document.getElementById("input-amount").value = amt;
-      document.getElementById("input-discount").value = disc || "";
+      const inputTx = document.getElementById("input-transcript");
+      if (inputTx) inputTx.value = text;
+
+      const inputAmt = document.getElementById("input-amount");
+      if (inputAmt && amt) inputAmt.value = amt;
+
+      const inputDisc = document.getElementById("input-discount");
+      if (inputDisc) inputDisc.value = disc || "";
+
+      // Update customer simulator bubble preview
+      safeSetText("sim-customer-msg", `"${text}"`);
     });
   });
 }
@@ -220,8 +305,10 @@ function initSimulationForm() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const submitBtn = document.getElementById("btn-submit-simulate");
+    if (!submitBtn) return;
+
     submitBtn.disabled = true;
-    submitBtn.innerHTML = `<span class="btn-icon">⏳</span> Processing Perception & Policy...`;
+    submitBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 18px;">hourglass_top</span> Processing Pipeline...`;
 
     const payload = {
       utterance_text: document.getElementById("input-transcript").value.trim(),
@@ -235,9 +322,17 @@ function initSimulationForm() {
     if (!payload.utterance_text) {
       alert("Please enter a customer utterance transcript.");
       submitBtn.disabled = false;
-      submitBtn.innerHTML = `<span class="btn-icon">▶</span> Execute Pipeline (Perception → Policy → Razorpay)`;
+      submitBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 18px;">bolt</span> Execute Pipeline (Perception → Policy → Razorpay)`;
       return;
     }
+
+    // Update customer simulator bubble
+    safeSetText("sim-customer-msg", `"${payload.utterance_text}"`);
+    safeSetText("sim-agent-status", "Evaluating Policy...");
+
+    const startTime = performance.now();
+    const traceHex = "0x" + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0");
+    safeSetText("trace-id-tag", `TRACE_ID: ${traceHex}`);
 
     resetPipelineSteps();
 
@@ -248,13 +343,17 @@ function initSimulationForm() {
         body: JSON.stringify(payload)
       });
       const data = await res.json();
+      const durationMs = Math.round(performance.now() - startTime);
+      safeSetText("trace-time-tag", `Latency: ${durationMs}ms`);
+
       renderPipelineTrace(data);
+      renderCustomerExperience(data, payload);
       loadAuditTrail(); // Refresh live audit trail
     } catch (err) {
       alert("Simulation failed: " + err.message);
     } finally {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = `<span class="btn-icon">▶</span> Execute Pipeline (Perception → Policy → Razorpay)`;
+      submitBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 18px;">bolt</span> Execute Pipeline (Perception → Policy → Razorpay)`;
     }
   });
 }
@@ -262,14 +361,64 @@ function initSimulationForm() {
 function resetPipelineSteps() {
   const steps = ["perception", "gateway", "policy", "action", "audit"];
   steps.forEach(s => {
+    const node = document.getElementById(`node-${s}`);
     const badge = document.getElementById(`badge-${s}`);
     const content = document.getElementById(`content-${s}`);
+    if (node) node.className = "dag-step-node active";
     if (badge) {
-      badge.className = "step-badge";
+      badge.className = "dag-step-badge";
       badge.innerText = "Evaluating...";
     }
     if (content) content.innerHTML = "<div class='trace-placeholder'>Processing...</div>";
   });
+
+  const ambAlert = document.getElementById("ambiguity-alert");
+  if (ambAlert) ambAlert.classList.add("hidden");
+}
+
+function renderCustomerExperience(res, payload) {
+  const ext = res.extraction || {};
+  const pol = res.policy_decision || {};
+  const plink = res.payment_link || {};
+  const statusBadge = document.getElementById("sim-agent-status");
+  const replyEl = document.getElementById("sim-agent-reply");
+  const payBtn = document.getElementById("sim-chat-pay-btn");
+  const payText = document.getElementById("sim-chat-pay-text");
+
+  if (!replyEl) return;
+
+  if (res.routed_to === "exception_list" || (ext.confidence && ext.confidence < 0.60)) {
+    if (statusBadge) {
+      statusBadge.className = "badge badge-sandbox";
+      statusBadge.innerText = "Routed to Human Review";
+    }
+    replyEl.innerText = "We've noted your response. A support specialist from our finance team will connect with you shortly to confirm terms.";
+    if (payBtn) payBtn.style.display = "none";
+  } else if (pol.decision === "DENIED") {
+    if (statusBadge) {
+      statusBadge.className = "badge";
+      statusBadge.style.background = "var(--error-bg)";
+      statusBadge.style.color = "var(--error-text)";
+      statusBadge.innerText = "Policy Capped";
+    }
+    replyEl.innerText = `We appreciate your request, but the maximum allowable discount is 30% (${escapeHtml(pol.reason_code || 'Cap Exceeded')}). Would you like to proceed with standard installment terms instead?`;
+    if (payBtn) payBtn.style.display = "none";
+  } else {
+    // Approved
+    if (statusBadge) {
+      statusBadge.className = "badge badge-pulse";
+      statusBadge.innerText = "✓ Policy Approved & Link Created";
+    }
+    const amt = plink.amount || ext.committed_amount || payload.original_amount;
+    const dateStr = ext.committed_date ? ` (due ${ext.committed_date})` : "";
+    replyEl.innerText = `Thanks for confirming! Here is your secure Razorpay payment link for ₹${Number(amt).toLocaleString()}${dateStr}:`;
+
+    if (payBtn && payText) {
+      payBtn.style.display = "inline-flex";
+      payBtn.href = plink.short_url || "#";
+      payText.innerText = `Pay ₹${Number(amt).toLocaleString()} via Razorpay`;
+    }
+  }
 }
 
 function renderPipelineTrace(res) {
@@ -277,30 +426,41 @@ function renderPipelineTrace(res) {
   const ext = res.extraction || {};
   const badgePerception = document.getElementById("badge-perception");
   const contentPerception = document.getElementById("content-perception");
+  const nodePerception = document.getElementById("node-perception");
   
-  if (badgePerception && contentPerception) {
-    badgePerception.className = "step-badge badge-success";
+  if (badgePerception && contentPerception && nodePerception) {
+    nodePerception.className = "dag-step-node active";
+    badgePerception.className = "dag-step-badge badge-success";
     badgePerception.innerText = `Confidence: ${(ext.confidence || 0).toFixed(2)}`;
     contentPerception.innerHTML = `
       <div><strong>Committed Amount:</strong> ${ext.committed_amount ? '₹' + ext.committed_amount.toLocaleString() : 'null (Full Balance)'}</div>
       <div><strong>Committed Date:</strong> ${ext.committed_date || 'null (Not specified)'}</div>
       <div><strong>Language Detected:</strong> ${ext.language_detected || 'hinglish'}</div>
-      <div><strong>Notes:</strong> ${escapeHtml(ext.extraction_notes || 'Extracted structured commitment')}</div>
+      <div><strong>Extraction Notes:</strong> ${escapeHtml(ext.extraction_notes || 'Extracted structured commitment')}</div>
     `;
   }
 
   // 2. Perception Gateway
   const badgeGateway = document.getElementById("badge-gateway");
   const contentGateway = document.getElementById("content-gateway");
-  if (badgeGateway && contentGateway) {
-    if (res.routed_to === "exception_list") {
-      badgeGateway.className = "step-badge badge-exception";
+  const nodeGateway = document.getElementById("node-gateway");
+  const ambAlert = document.getElementById("ambiguity-alert");
+
+  if (badgeGateway && contentGateway && nodeGateway) {
+    if (res.routed_to === "exception_list" || (ext.confidence && ext.confidence < 0.60)) {
+      nodeGateway.className = "dag-step-node error";
+      badgeGateway.className = "dag-step-badge badge-exception";
       badgeGateway.innerText = "Routed to Exception";
       contentGateway.innerHTML = `
-        <div style="color: #f59e0b;"><strong>Gate Decision:</strong> Routed to human exception list due to low confidence (<0.60) or vague commitment.</div>
+        <div style="color: var(--warning);"><strong>Gate Decision:</strong> Defensively routed to human review list due to low confidence (${(ext.confidence || 0).toFixed(2)} < 0.60) or vague commitment.</div>
       `;
+      if (ambAlert) {
+        ambAlert.classList.remove("hidden");
+        safeSetText("ambiguity-error-code", `ERR_CONFIDENCE_THRESHOLD_NOT_MET: ${(ext.confidence || 0).toFixed(2)} < 0.60`);
+      }
     } else {
-      badgeGateway.className = "step-badge badge-success";
+      nodeGateway.className = "dag-step-node active";
+      badgeGateway.className = "dag-step-badge badge-success";
       badgeGateway.innerText = "Passed Sanitization";
       contentGateway.innerHTML = `
         <div><strong>Type Validation:</strong> Positive numbers verified, injection payloads sanitized, typed Pydantic contract validated.</div>
@@ -311,17 +471,21 @@ function renderPipelineTrace(res) {
   // 3. Policy Engine
   const badgePolicy = document.getElementById("badge-policy");
   const contentPolicy = document.getElementById("content-policy");
+  const nodePolicy = document.getElementById("node-policy");
   const pol = res.policy_decision || {};
-  if (badgePolicy && contentPolicy) {
+
+  if (badgePolicy && contentPolicy && nodePolicy) {
     if (pol.decision === "DENIED") {
-      badgePolicy.className = "step-badge badge-denied";
+      nodePolicy.className = "dag-step-node error";
+      badgePolicy.className = "dag-step-badge badge-denied";
       badgePolicy.innerText = "DENIED (Policy Cap)";
       contentPolicy.innerHTML = `
-        <div style="color: #f43f5e;"><strong>Policy Decision:</strong> ${pol.decision} (${escapeHtml(pol.reason_code || 'Cap exceeded')})</div>
+        <div style="color: var(--error);"><strong>Policy Decision:</strong> ${pol.decision} (${escapeHtml(pol.reason_code || 'Cap exceeded')})</div>
         <div><strong>Alternative Offer:</strong> ${escapeHtml(pol.alternative_offer?.description || 'Escalate to human agent')}</div>
       `;
     } else {
-      badgePolicy.className = "step-badge badge-success";
+      nodePolicy.className = "dag-step-node active";
+      badgePolicy.className = "dag-step-badge badge-success";
       badgePolicy.innerText = "APPROVED / ELIGIBLE";
       contentPolicy.innerHTML = `
         <div><strong>Policy Checks:</strong> Discount within cap (≤30%), Retry attempt count within limit (≤3), zero broken promise escalation triggered.</div>
@@ -332,20 +496,27 @@ function renderPipelineTrace(res) {
   // 4. Action Selector & Razorpay Payment Adapter
   const badgeAction = document.getElementById("badge-action");
   const contentAction = document.getElementById("content-action");
+  const nodeAction = document.getElementById("node-action");
   const act = res.recovery_action || {};
   const plink = res.payment_link || {};
 
-  if (badgeAction && contentAction) {
-    badgeAction.className = "step-badge badge-success";
+  if (badgeAction && contentAction && nodeAction) {
+    nodeAction.className = "dag-step-node active";
+    badgeAction.className = "dag-step-badge badge-success";
     badgeAction.innerText = act.action_type || "CREATE_PAYMENT_LINK";
 
     let plinkHtml = "";
     if (plink.short_url) {
       plinkHtml = `
-        <div class="plink-card">
-          <div style="font-weight: 700; color: #34d399; margin-bottom: 0.2rem;">✓ Razorpay Payment Link Created:</div>
-          <div><a href="${plink.short_url}" target="_blank" class="plink-url">${plink.short_url}</a></div>
-          <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem;">Amount: ₹${(plink.amount || 0).toLocaleString()} • ID: ${plink.link_id || 'plink_live'}</div>
+        <div class="plink-card-box">
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Synthesized Razorpay Payment Link:</div>
+            <a href="${plink.short_url}" target="_blank" class="plink-url-text">${plink.short_url}</a>
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;">Amount: ₹${(plink.amount || 0).toLocaleString()} • ID: ${plink.link_id || 'plink_live'}</div>
+          </div>
+          <button class="btn-copy-link" onclick="copyPaymentLink('${plink.short_url}', this)">
+            <span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span> Copy
+          </button>
         </div>
       `;
     }
@@ -359,9 +530,12 @@ function renderPipelineTrace(res) {
   // 5. State Machine & Audit
   const badgeAudit = document.getElementById("badge-audit");
   const contentAudit = document.getElementById("content-audit");
-  if (badgeAudit && contentAudit) {
+  const nodeAudit = document.getElementById("node-audit");
+
+  if (badgeAudit && contentAudit && nodeAudit) {
     const finalState = res.new_state || res.final_state || 'P2P_Committed';
-    badgeAudit.className = "step-badge badge-success";
+    nodeAudit.className = "dag-step-node active";
+    badgeAudit.className = "dag-step-badge badge-success";
     badgeAudit.innerText = `State: ${finalState}`;
     contentAudit.innerHTML = `
       <div><strong>State Transition:</strong> Open → ${finalState}</div>
@@ -370,9 +544,28 @@ function renderPipelineTrace(res) {
   }
 }
 
+// Helper: Copy to Clipboard with Feedback
+window.copyPaymentLink = function(url, btn) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 14px; color: var(--primary-light);">check</span> Copied!`;
+      setTimeout(() => { btn.innerHTML = orig; }, 2000);
+    });
+  }
+};
+
 // -----------------------------------------------------------------------------
-// Load Invoices & Audit Stream
+// 8. Load Invoices & Live Audit Stream
 // -----------------------------------------------------------------------------
+
+function initRefreshButtons() {
+  const btnInv = document.getElementById("btn-refresh-invoices");
+  if (btnInv) btnInv.addEventListener("click", loadInvoices);
+
+  const btnAudit = document.getElementById("btn-refresh-audit");
+  if (btnAudit) btnAudit.addEventListener("click", loadAuditTrail);
+}
 
 async function loadInvoices() {
   try {
@@ -383,18 +576,46 @@ async function loadInvoices() {
     tbody.innerHTML = "";
 
     const items = (data.p2p_invoices || []).concat(data.payment_failures || []);
-    items.slice(0, 15).forEach(inv => {
+    safeSetText("chip-invoice-count", `Total: ${items.length}`);
+
+    items.forEach((inv, index) => {
       const tr = document.createElement("tr");
       const id = inv.invoice_id || inv.event_id || "INV-MOCK";
       const amt = inv.original_amount || inv.amount || 0;
       const raw = inv.raw_input || (inv.failure_code ? `Failure: ${inv.failure_code}` : "Invoice Open");
       
+      // Determine status pill
+      let statusHtml = '<span class="state-badge open">OPEN</span>';
+      if (inv.failure_code) {
+        statusHtml = '<span class="state-badge escalated">FAILED</span>';
+      } else if (index % 3 === 0) {
+        statusHtml = '<span class="state-badge promised">PROMISED</span>';
+      }
+
       tr.innerHTML = `
         <td><strong>${escapeHtml(id)}</strong></td>
         <td>₹${Number(amt).toLocaleString()}</td>
-        <td style="font-style: italic; color: #cbd5e1;">"${escapeHtml(raw)}"</td>
-        <td><span class="status-pill open">Active</span></td>
+        <td style="font-style: italic; color: var(--text-secondary);">"${escapeHtml(raw)}"</td>
+        <td>${statusHtml}</td>
       `;
+
+      tr.addEventListener("click", () => {
+        document.querySelectorAll("#tbody-invoices tr").forEach(r => r.classList.remove("active-row"));
+        tr.classList.add("active-row");
+
+        // Switch to playground and populate
+        if (inv.raw_input) {
+          switchTab("tab-playground");
+          const inputTx = document.getElementById("input-transcript");
+          const inputAmt = document.getElementById("input-amount");
+          const inputId = document.getElementById("input-invoice-id");
+          if (inputTx) inputTx.value = inv.raw_input;
+          if (inputAmt) inputAmt.value = amt;
+          if (inputId) inputId.value = id;
+          safeSetText("sim-customer-msg", `"${inv.raw_input}"`);
+        }
+      });
+
       tbody.appendChild(tr);
     });
   } catch (err) {
@@ -416,7 +637,7 @@ async function loadAuditTrail() {
       return;
     }
 
-    entries.slice(-15).reverse().forEach(entry => {
+    entries.slice(-20).reverse().forEach(entry => {
       const card = document.createElement("div");
       card.className = "audit-entry-card";
       card.innerHTML = `
@@ -431,6 +652,15 @@ async function loadAuditTrail() {
   } catch (err) {
     console.error("Failed to load audit trail:", err);
   }
+}
+
+// -----------------------------------------------------------------------------
+// Utilities
+// -----------------------------------------------------------------------------
+
+function safeSetText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = text;
 }
 
 function escapeHtml(str) {

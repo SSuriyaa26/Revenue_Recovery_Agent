@@ -17,6 +17,7 @@ scratch/
 *.wav
 *.mp3
 Speech_test/
+TEST_UI/
 
 # Runtime logs & data exports
 data/*.jsonl

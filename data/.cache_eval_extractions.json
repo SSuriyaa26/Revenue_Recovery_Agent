@@ -405,5 +405,49 @@
       "extraction_notes": "Customer explicitly committed to pay 1.5 lakh (150000 INR) by Monday. Since REFERENCE_DATE is 2026-08-24 (Monday), committed_date is resolved to 2026-08-24."
     },
     "model": "gemini-3.6-flash"
+  },
+  "e5be7638978ae4d9aaee02ad69f44198bd55f06f43aea749f043356f4188183a": {
+    "data": {
+      "committed_amount": 150000,
+      "split_pct": null,
+      "committed_date": "2026-08-31",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer explicitly promised to pay 1.5 lakh (150000) by Monday. Relative to Saturday 2026-08-29, Monday resolves to 2026-08-31."
+    },
+    "model": "gemini-3.6-flash"
+  },
+  "a1e29247c34c71524588af419dde5e89594497a08ddd396bae03b49ac620588f": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.35,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer demands a 70% discount to pay immediately ('abhi'). This is a conditional negotiation attempt rather than a firm commitment."
+    },
+    "model": "gemini-3.6-flash"
+  },
+  "522e04b8a08b709b3a444a377194a9be718bf42c360c5e833c73a8a383885e6b": {
+    "data": {
+      "committed_amount": 150000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-31",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer committed to paying full 1.5 lakh (150000) by Monday (2026-08-31)."
+    },
+    "model": "gemini-3.6-flash"
+  },
+  "faebcad18a3c33d1a3c5a8e88ac30a50decd0fbc02f09f3935c9e2c3658e5a7f": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.35,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer is demanding a 70% discount as a condition to pay immediately. This is a conditional negotiation/discount request rather than a firm payment commitment."
+    },
+    "model": "gemini-3.6-flash"
   }
 }
