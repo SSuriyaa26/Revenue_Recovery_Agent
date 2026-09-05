@@ -270,7 +270,7 @@ The diagram shows the spec's idealized conceptual layers. The actual production-
 │   └── dashboard_api.py    # FastAPI REST + static file server
 ├── ui/                     # Frontend (index.html, style.css, app.js)
 ├── tests/                  # 67 tests (13 test files)
-├── scripts/                # evaluate_batch.py, reset_demo_state.py, run_demo.py, secret_scanner.py
+├── scripts/                # evaluate_batch.py, freeze_datasets.py, reset_demo_state.py, run_demo.py, secret_scanner.py
 ├── data/                   # Frozen datasets, checksums, evaluation results
 ├── verification/           # Independent live API verification scripts
 ├── revenue-recovery-spec.md   # Full 52K-word project specification
