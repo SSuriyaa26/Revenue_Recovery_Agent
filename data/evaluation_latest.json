@@ -3,7 +3,7 @@
     "flow": "p2p",
     "held_out_set_checksum": "e42295d2f02e989037288be30f712fbfd181d7c4b4dadb2f8cbc0d57211e44dc",
     "policy_config_hash": "2a8f2e301da7b33680bcfc1eb516ec320732e9b28bf14809b3ef233f384c4a65",
-    "run_timestamp": "2026-09-05T14:41:45.635808",
+    "run_timestamp": "2026-09-05T17:17:14.697830",
     "n_records": 35,
     "recovery_rate": 0.4191,
     "naive_baseline_recovery_rate": 0.2687,
@@ -79,7 +79,7 @@
       },
       {
         "record_id": "INV-HO-026",
-        "reason": "No extraction",
+        "reason": "Discount request: 70.0% requested",
         "raw_input": "4.3 lakh bahut zyada hai ek baar me. 70% discount de do toh abhi bhej deta hoon."
       },
       {
@@ -89,7 +89,7 @@
       },
       {
         "record_id": "INV-HO-035",
-        "reason": "No extraction",
+        "reason": "Discount request: 50.0% requested",
         "raw_input": "1.75 lakh toh de dunga par 50% discount milega toh abhi kar deta hoon warna regular schedule pe."
       }
     ],
@@ -100,7 +100,7 @@
     "flow": "payment_failure",
     "held_out_set_checksum": "85626a71b79ca845bccd7ede1e7ce5aa4efa2fc65c7a69554e9d2e88d8f2f101",
     "policy_config_hash": "2a8f2e301da7b33680bcfc1eb516ec320732e9b28bf14809b3ef233f384c4a65",
-    "run_timestamp": "2026-09-05T14:41:45.704005",
+    "run_timestamp": "2026-09-05T17:17:14.736960",
     "n_records": 35,
     "recovery_rate": 0.8727,
     "naive_baseline_recovery_rate": 0.1933,
@@ -173,6 +173,6 @@
     "guardrail_test_results": "PASS",
     "idempotency_test_results": "PASS"
   },
-  "generated_at": "2026-09-05T14:41:45.704195",
+  "generated_at": "2026-09-05T17:17:14.737101",
   "llm_provider": "groq"
 }

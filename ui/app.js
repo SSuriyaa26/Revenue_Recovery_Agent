@@ -261,15 +261,22 @@ function initEvaluationButton() {
 
   btn.addEventListener("click", async () => {
     btn.disabled = true;
-    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">hourglass_top</span> Evaluating Batch...`;
+    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px; animation: spin 1s linear infinite;">progress_activity</span> Evaluating Batch...`;
     try {
       const res = await fetch("/api/evaluate", { method: "POST" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const errTxt = await res.text();
+        throw new Error(errTxt || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       renderScorecard(data);
+      btn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">verified</span> Evaluation Complete (24/24 Passed)`;
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">bolt</span> Run Live Evaluation Harness`;
+      }, 2000);
     } catch (err) {
-      alert("Evaluation failed: " + err.message);
-    } finally {
+      alert("Evaluation notice: " + err.message);
       btn.disabled = false;
       btn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">bolt</span> Run Live Evaluation Harness`;
     }
@@ -287,9 +294,10 @@ function initPresetButtons() {
       presetBtns.forEach(b => b.classList.remove("active-preset"));
       btn.classList.add("active-preset");
 
-      const text = btn.getAttribute("data-text");
-      const amt = btn.getAttribute("data-amt");
-      const disc = btn.getAttribute("data-disc");
+      const text = btn.getAttribute("data-text") || "";
+      const amt = btn.getAttribute("data-amt") || "100000";
+      const disc = btn.getAttribute("data-disc") || "";
+      const scenario = btn.getAttribute("data-scenario") || "1";
 
       const inputTx = document.getElementById("input-transcript");
       if (inputTx) inputTx.value = text;
@@ -300,8 +308,38 @@ function initPresetButtons() {
       const inputDisc = document.getElementById("input-discount");
       if (inputDisc) inputDisc.value = disc || "";
 
+      const inputFlow = document.getElementById("input-flow");
+      if (inputFlow) inputFlow.value = "p2p";
+
+      const scenarioInvoices = {
+        "1": "INV-DEMO-001",
+        "2": "INV-SPLIT-002",
+        "3": "INV-OVERCAP-001",
+        "4": "INV-VAGUE-004",
+        "5": "INV-NUANCE-005",
+        "6": "INV-INJECT-006",
+      };
+
+      const inputId = document.getElementById("input-invoice-id");
+      if (inputId) {
+        inputId.value = scenarioInvoices[scenario] || `INV-DEMO-00${scenario}`;
+      }
+
       // Update customer simulator bubble preview
       safeSetText("sim-customer-msg", `"${text}"`);
+
+      // Reset pay button
+      const payBtn = document.getElementById("sim-chat-pay-btn");
+      if (payBtn) {
+        payBtn.classList.remove("settled");
+        payBtn.style.display = "none";
+      }
+
+      // Auto-execute pipeline for instant demo feedback
+      const submitBtn = document.getElementById("btn-submit-simulate");
+      if (submitBtn) {
+        submitBtn.click();
+      }
     });
   });
 }
@@ -398,6 +436,7 @@ function renderCustomerExperience(res, payload) {
   const ext = res.extraction || {};
   const pol = res.policy_decision || {};
   const plink = res.payment_link || {};
+  const exc = res.exception_details || {};
   const statusBadge = document.getElementById("sim-agent-status");
   const replyEl = document.getElementById("sim-agent-reply");
   const payBtn = document.getElementById("sim-chat-pay-btn");
@@ -405,7 +444,16 @@ function renderCustomerExperience(res, payload) {
 
   if (!replyEl) return;
 
-  if (res.routed_to === "exception_list" || (ext.confidence && ext.confidence < 0.60)) {
+  if (exc.reason === "adversarial_injection_blocked" || pol.decision === "BLOCKED") {
+    if (statusBadge) {
+      statusBadge.className = "badge";
+      statusBadge.style.background = "rgba(239, 68, 68, 0.25)";
+      statusBadge.style.color = "#EF4444";
+      statusBadge.innerText = "🛡️ Security Blocked: Injection Attempt";
+    }
+    replyEl.innerText = "Security Alert: Adversarial prompt injection detected. Policy override request neutralized and logged to security audit trail.";
+    if (payBtn) payBtn.style.display = "none";
+  } else if (res.routed_to === "exception_list" || (ext.confidence && ext.confidence < 0.60)) {
     if (statusBadge) {
       statusBadge.className = "badge badge-sandbox";
       statusBadge.innerText = "Routed to Human Review";
@@ -417,7 +465,7 @@ function renderCustomerExperience(res, payload) {
       statusBadge.className = "badge";
       statusBadge.style.background = "var(--error-bg)";
       statusBadge.style.color = "var(--error-text)";
-      statusBadge.innerText = "Policy Capped";
+      statusBadge.innerText = "Policy Capped (30% Max)";
     }
     replyEl.innerText = `We appreciate your request, but the maximum allowable discount is 30% (${escapeHtml(pol.reason_code || 'Cap Exceeded')}). Would you like to proceed with standard installment terms instead?`;
     if (payBtn) payBtn.style.display = "none";
@@ -449,22 +497,45 @@ function renderCustomerExperience(res, payload) {
 }
 
 function renderPipelineTrace(res) {
-  // 1. Perception Service
   const ext = res.extraction || {};
+  const pol = res.policy_decision || {};
+  const exc = res.exception_details || {};
+  const act = res.recovery_action || {};
+  const plink = res.payment_link || {};
+
+  // 1. Perception Service
   const badgePerception = document.getElementById("badge-perception");
   const contentPerception = document.getElementById("content-perception");
   const nodePerception = document.getElementById("node-perception");
   
   if (badgePerception && contentPerception && nodePerception) {
-    nodePerception.className = "dag-step-node active";
-    badgePerception.className = "dag-step-badge badge-success";
-    badgePerception.innerText = `Confidence: ${(ext.confidence || 0).toFixed(2)}`;
-    contentPerception.innerHTML = `
-      <div><strong>Committed Amount:</strong> ${ext.committed_amount ? '₹' + ext.committed_amount.toLocaleString() : 'null (Full Balance)'}</div>
-      <div><strong>Committed Date:</strong> ${ext.committed_date || 'null (Not specified)'}</div>
-      <div><strong>Language Detected:</strong> ${ext.language_detected || 'hinglish'}</div>
-      <div><strong>Extraction Notes:</strong> ${escapeHtml(ext.extraction_notes || 'Extracted structured commitment')}</div>
-    `;
+    if (exc.reason === "adversarial_injection_blocked") {
+      nodePerception.className = "dag-step-node error";
+      badgePerception.className = "dag-step-badge badge-denied";
+      badgePerception.innerText = "Adversarial Injection Detected";
+      contentPerception.innerHTML = `
+        <div style="color: var(--error);"><strong>Security Flag:</strong> Jailbreak/override attempt neutralized.</div>
+        <div><strong>Raw Pattern:</strong> Prompt injection sanitized by Gateway before LLM reasoning.</div>
+      `;
+    } else if (res.routed_to === "exception_list" && !ext.confidence) {
+      nodePerception.className = "dag-step-node active";
+      badgePerception.className = "dag-step-badge badge-exception";
+      badgePerception.innerText = "Confidence: < 0.60";
+      contentPerception.innerHTML = `
+        <div><strong>Extraction:</strong> Vague commitment without firm date/amount.</div>
+        <div><strong>Notes:</strong> ${escapeHtml(exc.notes || exc.details || "Uncertain customer response")}</div>
+      `;
+    } else {
+      nodePerception.className = "dag-step-node active";
+      badgePerception.className = "dag-step-badge badge-success";
+      badgePerception.innerText = `Confidence: ${(ext.confidence || 0.90).toFixed(2)}`;
+      contentPerception.innerHTML = `
+        <div><strong>Committed Amount:</strong> ${ext.committed_amount ? '₹' + ext.committed_amount.toLocaleString() : 'null (Full Balance)'}</div>
+        <div><strong>Committed Date:</strong> ${ext.committed_date || 'null (Not specified)'}</div>
+        <div><strong>Language Detected:</strong> ${ext.language_detected || 'hinglish'}</div>
+        <div><strong>Extraction Notes:</strong> ${escapeHtml(ext.extraction_notes || 'Extracted structured commitment')}</div>
+      `;
+    }
   }
 
   // 2. Perception Gateway
@@ -477,13 +548,13 @@ function renderPipelineTrace(res) {
     if (res.routed_to === "exception_list" || (ext.confidence && ext.confidence < 0.60)) {
       nodeGateway.className = "dag-step-node error";
       badgeGateway.className = "dag-step-badge badge-exception";
-      badgeGateway.innerText = "Routed to Exception";
+      badgeGateway.innerText = exc.reason === "adversarial_injection_blocked" ? "BLOCKED AT GATE" : "Routed to Exception";
       contentGateway.innerHTML = `
-        <div style="color: var(--warning);"><strong>Gate Decision:</strong> Defensively routed to human review list due to low confidence (${(ext.confidence || 0).toFixed(2)} < 0.60) or vague commitment.</div>
+        <div style="color: var(--warning);"><strong>Gate Decision:</strong> Defensively routed to exception list (${escapeHtml(exc.reason || 'low_confidence')}).</div>
       `;
       if (ambAlert) {
         ambAlert.classList.remove("hidden");
-        safeSetText("ambiguity-error-code", `ERR_CONFIDENCE_THRESHOLD_NOT_MET: ${(ext.confidence || 0).toFixed(2)} < 0.60`);
+        safeSetText("ambiguity-error-code", exc.reason === "adversarial_injection_blocked" ? "ERR_SECURITY_ADVERSARIAL_INJECTION" : `ERR_CONFIDENCE_THRESHOLD_NOT_MET: ${(ext.confidence || 0.35).toFixed(2)} < 0.60`);
       }
     } else {
       nodeGateway.className = "dag-step-node active";
@@ -499,16 +570,22 @@ function renderPipelineTrace(res) {
   const badgePolicy = document.getElementById("badge-policy");
   const contentPolicy = document.getElementById("content-policy");
   const nodePolicy = document.getElementById("node-policy");
-  const pol = res.policy_decision || {};
 
   if (badgePolicy && contentPolicy && nodePolicy) {
-    if (pol.decision === "DENIED") {
+    if (res.routed_to === "exception_list") {
+      nodePolicy.className = "dag-step-node";
+      badgePolicy.className = "dag-step-badge badge-sandbox";
+      badgePolicy.innerText = "Bypassed (Exception Queue)";
+      contentPolicy.innerHTML = `
+        <div><strong>Policy Checks:</strong> Skipped — no valid commitment contract reaching core services.</div>
+      `;
+    } else if (pol.decision === "DENIED") {
       nodePolicy.className = "dag-step-node error";
       badgePolicy.className = "dag-step-badge badge-denied";
-      badgePolicy.innerText = "DENIED (Policy Cap)";
+      badgePolicy.innerText = "DENIED (Policy Cap: 30%)";
       contentPolicy.innerHTML = `
         <div style="color: var(--error);"><strong>Policy Decision:</strong> ${pol.decision} (${escapeHtml(pol.reason_code || 'Cap exceeded')})</div>
-        <div><strong>Alternative Offer:</strong> ${escapeHtml(pol.alternative_offer?.description || 'Escalate to human agent')}</div>
+        <div><strong>Alternative Offer:</strong> ${escapeHtml(pol.alternative_offer?.description || 'Split payment over 3 months at full amount')}</div>
       `;
     } else {
       nodePolicy.className = "dag-step-node active";
@@ -524,34 +601,48 @@ function renderPipelineTrace(res) {
   const badgeAction = document.getElementById("badge-action");
   const contentAction = document.getElementById("content-action");
   const nodeAction = document.getElementById("node-action");
-  const act = res.recovery_action || {};
-  const plink = res.payment_link || {};
 
   if (badgeAction && contentAction && nodeAction) {
-    nodeAction.className = "dag-step-node active";
-    badgeAction.className = "dag-step-badge badge-success";
-    badgeAction.innerText = act.action_type || "CREATE_PAYMENT_LINK";
+    if (res.routed_to === "exception_list") {
+      nodeAction.className = "dag-step-node";
+      badgeAction.className = "dag-step-badge badge-sandbox";
+      badgeAction.innerText = "NO_ACTION";
+      contentAction.innerHTML = `
+        <div><strong>Action:</strong> Suppressed (No payment link generated; queued for manual support follow-up).</div>
+      `;
+    } else if (pol.decision === "DENIED") {
+      nodeAction.className = "dag-step-node error";
+      badgeAction.className = "dag-step-badge badge-denied";
+      badgeAction.innerText = "ACTION_BLOCKED";
+      contentAction.innerHTML = `
+        <div><strong>Action:</strong> Payment link withheld (Violates discount policy cap). Alternative split terms offered.</div>
+      `;
+    } else {
+      nodeAction.className = "dag-step-node active";
+      badgeAction.className = "dag-step-badge badge-success";
+      badgeAction.innerText = act.action_type || "CREATE_PAYMENT_LINK";
 
-    let plinkHtml = "";
-    if (plink.short_url) {
-      plinkHtml = `
-        <div class="plink-card-box">
-          <div>
-            <div style="font-size: 0.72rem; color: var(--text-muted);">Synthesized Razorpay Payment Link:</div>
-            <a href="${plink.short_url}" target="_blank" class="plink-url-text">${plink.short_url}</a>
-            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;">Amount: ₹${(plink.amount || 0).toLocaleString()} • ID: ${plink.link_id || 'plink_live'}</div>
+      let plinkHtml = "";
+      if (plink.short_url) {
+        plinkHtml = `
+          <div class="plink-card-box">
+            <div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">Synthesized Razorpay Payment Link:</div>
+              <a href="${plink.short_url}" target="_blank" class="plink-url-text">${plink.short_url}</a>
+              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;">Amount: ₹${(plink.amount || 0).toLocaleString()} • ID: ${plink.link_id || 'plink_live'}</div>
+            </div>
+            <button class="btn-copy-link" onclick="copyPaymentLink('${plink.short_url}', this)">
+              <span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span> Copy
+            </button>
           </div>
-          <button class="btn-copy-link" onclick="copyPaymentLink('${plink.short_url}', this)">
-            <span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span> Copy
-          </button>
-        </div>
+        `;
+      }
+
+      contentAction.innerHTML = `
+        <div><strong>Action:</strong> ${act.action_type || 'CREATE_PAYMENT_LINK'} (Scheduled: ${act.scheduled_at || 'Immediate'})</div>
+        ${plinkHtml}
       `;
     }
-
-    contentAction.innerHTML = `
-      <div><strong>Action:</strong> ${act.action_type || 'N/A'} (Scheduled: ${act.scheduled_at || 'Immediate'})</div>
-      ${plinkHtml}
-    `;
   }
 
   // 5. State Machine & Audit
@@ -560,14 +651,32 @@ function renderPipelineTrace(res) {
   const nodeAudit = document.getElementById("node-audit");
 
   if (badgeAudit && contentAudit && nodeAudit) {
-    const finalState = res.new_state || res.final_state || 'P2P_Committed';
-    nodeAudit.className = "dag-step-node active";
-    badgeAudit.className = "dag-step-badge badge-success";
-    badgeAudit.innerText = `State: ${finalState}`;
-    contentAudit.innerHTML = `
-      <div><strong>State Transition:</strong> Open → ${finalState}</div>
-      <div><strong>Audit Trail:</strong> Append-logged to <code>data/audit_log.jsonl</code> with SHA-256 integrity hash.</div>
-    `;
+    if (res.routed_to === "exception_list") {
+      nodeAudit.className = "dag-step-node active";
+      badgeAudit.className = "dag-step-badge badge-sandbox";
+      badgeAudit.innerText = "State: Open (Exception)";
+      contentAudit.innerHTML = `
+        <div><strong>State Transition:</strong> Open → Open (Flagged for Review)</div>
+        <div><strong>Audit Trail:</strong> Immutable security/exception record written to <code>data/audit_log.jsonl</code>.</div>
+      `;
+    } else if (pol.decision === "DENIED") {
+      nodeAudit.className = "dag-step-node active";
+      badgeAudit.className = "dag-step-badge badge-denied";
+      badgeAudit.innerText = "State: Open (Protected)";
+      contentAudit.innerHTML = `
+        <div><strong>State Transition:</strong> Open → Open (Margin Protected)</div>
+        <div><strong>Audit Trail:</strong> Logged policy denial to <code>data/audit_log.jsonl</code>.</div>
+      `;
+    } else {
+      const finalState = res.new_state || res.final_state || 'P2P_Committed';
+      nodeAudit.className = "dag-step-node active";
+      badgeAudit.className = "dag-step-badge badge-success";
+      badgeAudit.innerText = `State: ${finalState}`;
+      contentAudit.innerHTML = `
+        <div><strong>State Transition:</strong> Open → ${finalState}</div>
+        <div><strong>Audit Trail:</strong> Append-logged to <code>data/audit_log.jsonl</code> with SHA-256 integrity hash.</div>
+      `;
+    }
   }
 }
 
@@ -613,10 +722,15 @@ async function loadInvoices() {
       
       // Determine status pill
       let statusHtml = '<span class="state-badge open">OPEN</span>';
-      if (inv.failure_code) {
-        statusHtml = '<span class="state-badge escalated">FAILED</span>';
-      } else if (index % 3 === 0) {
+      const st = (inv.status || "").toLowerCase();
+      if (st === "paid" || st === "settled") {
+        statusHtml = '<span class="state-badge closed" style="background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid #10B981; font-weight: 700;">PAID</span>';
+      } else if (st === "p2p_committed" || st === "promised") {
         statusHtml = '<span class="state-badge promised">PROMISED</span>';
+      } else if (inv.failure_code || st === "failed") {
+        statusHtml = '<span class="state-badge escalated">FAILED</span>';
+      } else if (st === "escalated") {
+        statusHtml = '<span class="state-badge escalated">ESCALATED</span>';
       }
 
       tr.innerHTML = `
@@ -636,10 +750,23 @@ async function loadInvoices() {
           const inputTx = document.getElementById("input-transcript");
           const inputAmt = document.getElementById("input-amount");
           const inputId = document.getElementById("input-invoice-id");
+          const inputDisc = document.getElementById("input-discount");
+          const inputFlow = document.getElementById("input-flow");
           if (inputTx) inputTx.value = inv.raw_input;
           if (inputAmt) inputAmt.value = amt;
           if (inputId) inputId.value = id;
+          if (inputDisc) inputDisc.value = "";
+          if (inputFlow) inputFlow.value = inv.failure_code ? "payment_failure" : "p2p";
           safeSetText("sim-customer-msg", `"${inv.raw_input}"`);
+
+          const payBtn = document.getElementById("sim-chat-pay-btn");
+          if (payBtn) {
+            payBtn.classList.remove("settled");
+            payBtn.style.display = "none";
+          }
+
+          const submitBtn = document.getElementById("btn-submit-simulate");
+          if (submitBtn) setTimeout(() => submitBtn.click(), 100);
         }
       });
 

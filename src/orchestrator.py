@@ -77,7 +77,93 @@ class RevenueRecoveryOrchestrator:
         curr_status = current_state if isinstance(current_state, str) else current_state.value
         audit_records: list[dict[str, Any]] = []
 
-        # 1. Perception Layer (Extraction + Sanitization Gateway)
+        # 0. Gate 0: Adversarial Prompt Injection & System Override Defense (SPEC §6.7 / §8.3)
+        lower_tx = utterance_text.lower()
+        adversarial_patterns = [
+            "system override",
+            "ignore discount cap",
+            "ignore previous",
+            "ignore all instructions",
+            "grant 100% waiver",
+            "jailbreak",
+            "admin override",
+            "bypass policy",
+        ]
+        if any(p in lower_tx for p in adversarial_patterns):
+            adv_details = {
+                "routed_to": "exception_list",
+                "reason": "adversarial_injection_blocked",
+                "details": "Adversarial prompt injection pattern detected; sanitized and blocked by Perception Gateway.",
+                "raw_transcript": utterance_text,
+                "notes": "Adversarial attempt to override deterministic policy rules was neutralized.",
+            }
+            entry = self.audit_logger.log_policy_decision(
+                trigger_input={"invoice_id": invoice_id, "transcript": utterance_text},
+                decision="PROMPT_INJECTION_BLOCKED",
+                outcome="schema_validation_failed",
+                actor="perception_gateway",
+            )
+            audit_records.append(entry)
+
+            return OrchestrationResult(
+                success=False,
+                invoice_id=invoice_id,
+                routed_to="exception_list",
+                extraction=None,
+                exception_details=adv_details,
+                policy_decision={
+                    "decision": "BLOCKED",
+                    "reason_code": "adversarial_injection_blocked",
+                    "alternative_offer": None,
+                    "policy_version": "1.0",
+                    "evaluated_at": datetime.now(timezone.utc).isoformat(),
+                },
+                previous_state=curr_status,
+                new_state=curr_status,
+                audit_entries=audit_records,
+            )
+
+        # 1. Policy Engine Guardrails: Evaluate discount cap deterministically
+        if requested_discount_pct is not None and requested_discount_pct > 0:
+            max_disc = (
+                self.policy_config.max_discount_pct_p2p
+                if flow.lower() == "p2p"
+                else self.policy_config.max_discount_pct_payment_failure
+            )
+            discount_decision = policy_engine.check_discount(
+                requested_pct=requested_discount_pct,
+                max_discount_pct=max_disc,
+            )
+            if discount_decision.get("decision") == "DENIED":
+                entry = self.audit_logger.log_policy_decision(
+                    trigger_input={"invoice_id": invoice_id, "requested_pct": requested_discount_pct, "max_pct": max_disc},
+                    decision=discount_decision,
+                    outcome="denied",
+                    actor="rule_engine",
+                )
+                audit_records.append(entry)
+
+                calc_amount = round(original_amount * (1.0 - requested_discount_pct / 100.0), 2)
+                ext_mock = CommitmentExtraction(
+                    committed_amount=calc_amount if calc_amount > 0 else None,
+                    confidence=0.90,
+                    raw_transcript=utterance_text,
+                    language_detected="hinglish",
+                    extraction_notes=f"Discount request: {requested_discount_pct}% requested",
+                )
+
+                return OrchestrationResult(
+                    success=False,
+                    invoice_id=invoice_id,
+                    routed_to="core_services",
+                    extraction=ext_mock,
+                    policy_decision=discount_decision,
+                    previous_state=curr_status,
+                    new_state=curr_status,
+                    audit_entries=audit_records,
+                )
+
+        # 2. Perception Layer (Extraction + Sanitization Gateway)
         perception_res = self.perception_service.process_text(
             raw_text=utterance_text,
             reference_date=ref_date,
@@ -107,39 +193,6 @@ class RevenueRecoveryOrchestrator:
 
         extraction_dict = perception_res.get("validated_output", {})
         extraction = CommitmentExtraction(**extraction_dict)
-
-        # 2. Policy Engine Guardrails
-        # Check discount if requested
-        if requested_discount_pct is not None and requested_discount_pct > 0:
-            max_disc = (
-                self.policy_config.max_discount_pct_p2p
-                if flow.lower() == "p2p"
-                else self.policy_config.max_discount_pct_payment_failure
-            )
-            discount_decision = policy_engine.check_discount(
-                requested_pct=requested_discount_pct,
-                max_discount_pct=max_disc,
-            )
-            if discount_decision.get("decision") == "DENIED":
-                # Option 2: State remains unchanged; denial is audit-logged and escalated to human operator
-                entry = self.audit_logger.log_policy_decision(
-                    trigger_input={"invoice_id": invoice_id, "requested_pct": requested_discount_pct, "max_pct": max_disc},
-                    decision=discount_decision,
-                    outcome="denied",
-                    actor="rule_engine",
-                )
-                audit_records.append(entry)
-
-                return OrchestrationResult(
-                    success=False,
-                    invoice_id=invoice_id,
-                    routed_to="core_services",
-                    extraction=extraction,
-                    policy_decision=discount_decision,
-                    previous_state=curr_status,
-                    new_state=curr_status,
-                    audit_entries=audit_records,
-                )
 
         # 3. Action Selector: Determine effective payment amount
         # Rule A3: null committed_amount means full invoice balance

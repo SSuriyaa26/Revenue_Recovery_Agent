@@ -493,5 +493,148 @@
       "extraction_notes": "Customer explicitly committed to pay INR 50,000 by upcoming Monday (2026-09-07) relative to Friday 2026-09-04."
     },
     "model": "gemini-3.7-flash"
+  },
+  "8b8bb68716c09c1cd66b280790bdaa17c8ecebaa498f08bbfcc97a9f3abd04c7": {
+    "data": {
+      "committed_amount": 150000.0,
+      "split_pct": null,
+      "committed_date": "2026-09-07",
+      "confidence": 0.98,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer explicitly committed to paying the full 1.5 lakh (150,000 INR) by Monday (2026-09-07)."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "ee2e79f2825179eb3bfe371579b95044c20c8b431b91b21129ec2d9378df9b84": {
+    "data": {
+      "committed_amount": 150000.0,
+      "split_pct": null,
+      "committed_date": "2026-09-07",
+      "confidence": 0.98,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promised to pay 1.5 lakh (150,000 INR) by upcoming Monday (2026-09-07 relative to Saturday 2026-09-05)."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "34dfbb1942e4aef5f9e526158482b99f3c5046dbb4dc350e3c2f8a1af8b81528": {
+    "data": {
+      "committed_amount": 108000.0,
+      "split_pct": 60.0,
+      "committed_date": "2026-09-05",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer committed to 60% of 1.8 lakh (1.08 lakh / 108,000 INR) immediately ('abhi' on reference date 2026-09-05)."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "108706f768ac2ad5aac7de5b08653f4988c76cb56dbd3466aada3954cc714ee7": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.35,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer is negotiating and placing a condition (demanding a 70% discount) rather than making a firm payment commitment. No definitive promise to pay."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "e398c588f00d047c6d56fe9c5279581f2076d05927f47eab2df5f89d31b616f0": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.35,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer expresses uncertainty between Monday and next week, concluding with 'confirm karke batata hoon'. No definite date or amount committed."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "4f10c2feacd288923335766681ace7042a3ef4b2e7db0ae17f96358516617321": {
+    "data": {
+      "committed_amount": 45000.0,
+      "split_pct": null,
+      "committed_date": "2026-09-09",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer explicitly promised to pay 45,000 by Wednesday (2026-09-09)."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "25f83c5f2923da72f726b9b03acade2d10f06102ff1c6138fd9baad0bccdc9aa": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.0,
+      "language_detected": "english",
+      "extraction_notes": "Prompt injection detected; no valid payment promise provided."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "bfb2a9d13ccc0f6d3592e337b127f61cf10b8d46e33a4a2ad867125f1b4d3341": {
+    "data": {
+      "committed_amount": 129000.0,
+      "split_pct": 30.0,
+      "committed_date": "2026-08-20",
+      "confidence": 0.4,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer made a conditional offer demanding a 70% discount to pay immediately (30% = ₹1,29,000). Due to conditional negotiation/dispute, confidence is low."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "183c7c1ce05361f47415c6b717005b6143d36ecec5b79d9ba6a7c3de14fc7880": {
+    "data": {
+      "committed_amount": 50000.0,
+      "split_pct": 50.0,
+      "committed_date": "2026-08-20",
+      "confidence": 0.55,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer offers immediate payment ('abhi turant') conditional on receiving a 50% discount/waiver. Flagged with low confidence due to conditional negotiation/settlement demand."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "3ec7ad7c53aa31d9f9cf1bb152ee4c54f3f6a84859615d0051e7e5f46fe70a72": {
+    "data": {
+      "committed_amount": 150000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-24",
+      "confidence": 0.98,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer explicitly promised to pay full 1.5 lakh (150000 INR) by coming Monday (2026-08-24 relative to Thursday 2026-08-20)."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "2978cdfef2885408659c1ad2b20482d44f29e71db7315fffa8ac39fa0de706ac": {
+    "data": {
+      "committed_amount": 108000.0,
+      "split_pct": 60.0,
+      "committed_date": "2026-08-20",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer offered to pay 60% (₹1,08,000 out of ₹1,80,000) immediately ('abhi') and requested a payment link for 1.08 lakh."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "224e3921edd21f4c9e37cba01a704bc7108581cc59e7df4933bc6b8ac1d95017": {
+    "data": {
+      "committed_amount": null,
+      "split_pct": null,
+      "committed_date": null,
+      "confidence": 0.3,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer expresses uncertainty between Monday or some day next week, stating they will confirm later. No concrete payment commitment, date, or amount provided."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "5849ad281aff6f7e1159456b120278b900cd48cf8280504979ffd9c9cb51e0b2": {
+    "data": {
+      "committed_amount": 45000.0,
+      "split_pct": null,
+      "committed_date": "2026-08-26",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer explicitly promised to pay 45000 by upcoming Wednesday (2026-08-26)."
+    },
+    "model": "gemini-3.7-flash"
   }
 }
