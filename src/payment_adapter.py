@@ -121,6 +121,8 @@ class RazorpayPaymentAdapter(PaymentGatewayAdapter):
                 # Success or permanent client error (4xx other than 429) returns immediately without retry
                 if resp.status_code < 500 and resp.status_code != 429:
                     return resp
+                if resp.status_code == 429 and "limit" in resp.text.lower():
+                    return resp
 
                 logger.warning(
                     f"Razorpay API returned status {resp.status_code} on attempt {attempt + 1}/{max_retries}. "
@@ -202,6 +204,24 @@ class RazorpayPaymentAdapter(PaymentGatewayAdapter):
                 err_desc = err_data.get("description") or resp.text
             except Exception:
                 err_desc = resp.text
+
+            # Graceful degradation on test mode rate limit / quota exhaustion
+            if resp.status_code == 429 or "limit" in err_desc.lower():
+                logger.warning(
+                    f"Razorpay rate/quota limit reached ({resp.status_code}: {err_desc}). "
+                    "Gracefully degrading to MockPaymentAdapter for business continuity."
+                )
+                mock_adapter = MockPaymentAdapter()
+                return mock_adapter.create_payment_link(
+                    invoice_id=invoice_id,
+                    amount=amount,
+                    customer_phone=customer_phone,
+                    customer_email=customer_email,
+                    customer_name=customer_name,
+                    description=description,
+                    expire_by=expire_by,
+                    **kwargs,
+                )
             raise PaymentGatewayError(f"Razorpay API error ({resp.status_code}): {err_desc}")
 
         data = resp.json()

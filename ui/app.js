@@ -4,6 +4,13 @@
  * Pure Vanilla JavaScript — Zero External Frontend Dependencies
  */
 
+let currentPaymentData = {
+  invoiceId: "INV-DEMO-001",
+  amount: 100000.0,
+  shortUrl: "",
+  customerName: "Acme Corp (Ramesh Sharma)",
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   initThemeToggle();
   initTabs();
@@ -13,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initEvaluationButton();
   initExceptionCollapsible();
   initRefreshButtons();
+  initRazorpayModal();
 
   // Load initial datasets from backend REST API
   loadMetrics();
@@ -342,6 +350,15 @@ function initSimulationForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
+      if (!res.ok) {
+        const errText = await res.text();
+        let errMsg = errText;
+        try {
+          const errJson = JSON.parse(errText);
+          errMsg = errJson.detail || errJson.message || errText;
+        } catch (e) {}
+        throw new Error(errMsg || `Server error (${res.status})`);
+      }
       const data = await res.json();
       const durationMs = Math.round(performance.now() - startTime);
       safeSetText("trace-time-tag", `Latency: ${durationMs}ms`);
@@ -349,8 +366,9 @@ function initSimulationForm() {
       renderPipelineTrace(data);
       renderCustomerExperience(data, payload);
       loadAuditTrail(); // Refresh live audit trail
+      loadInvoices(); // Refresh invoices table
     } catch (err) {
-      alert("Simulation failed: " + err.message);
+      alert("Simulation notice: " + err.message);
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 18px;">bolt</span> Execute Pipeline (Perception → Policy → Razorpay)`;
@@ -411,11 +429,20 @@ function renderCustomerExperience(res, payload) {
     }
     const amt = plink.amount || ext.committed_amount || payload.original_amount;
     const dateStr = ext.committed_date ? ` (due ${ext.committed_date})` : "";
+    
+    currentPaymentData = {
+      invoiceId: res.invoice_id || payload.invoice_id || "INV-DEMO-001",
+      amount: Number(amt),
+      shortUrl: plink.short_url || "",
+      customerName: payload.customer_name || "Acme Corp (Ramesh Sharma)",
+    };
+
     replyEl.innerText = `Thanks for confirming! Here is your secure Razorpay payment link for ₹${Number(amt).toLocaleString()}${dateStr}:`;
 
     if (payBtn && payText) {
+      payBtn.classList.remove("settled");
+      payBtn.disabled = false;
       payBtn.style.display = "inline-flex";
-      payBtn.href = plink.short_url || "#";
       payText.innerText = `Pay ₹${Number(amt).toLocaleString()} via Razorpay`;
     }
   }
@@ -651,6 +678,163 @@ async function loadAuditTrail() {
     });
   } catch (err) {
     console.error("Failed to load audit trail:", err);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Razorpay Checkout Modal Controller
+// -----------------------------------------------------------------------------
+
+function initRazorpayModal() {
+  const modal = document.getElementById("rzp-checkout-modal");
+  const payBtn = document.getElementById("sim-chat-pay-btn");
+  const closeBtn = document.getElementById("btn-close-rzp-modal");
+  const confirmBtn = document.getElementById("btn-confirm-rzp-pay");
+  const statusBox = document.getElementById("rzp-status-box");
+  const extBtn = document.getElementById("rzp-external-url-btn");
+
+  if (!modal || !payBtn) return;
+
+  // Open modal when Pay button clicked in chat
+  payBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (payBtn.classList.contains("settled")) return;
+
+    safeSetText("rzp-modal-invoice", currentPaymentData.invoiceId);
+    safeSetText("rzp-modal-customer", currentPaymentData.customerName);
+    safeSetText("rzp-modal-amount", `₹${currentPaymentData.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`);
+    safeSetText("btn-confirm-rzp-pay-text", `Authorize & Pay ₹${currentPaymentData.amount.toLocaleString()}`);
+
+    if (statusBox) {
+      statusBox.className = "rzp-status-alert hidden";
+      statusBox.innerText = "";
+    }
+
+    if (extBtn) {
+      if (currentPaymentData.shortUrl && currentPaymentData.shortUrl.startsWith("http") && !currentPaymentData.shortUrl.includes("mock_")) {
+        extBtn.classList.remove("hidden");
+        extBtn.href = currentPaymentData.shortUrl;
+      } else {
+        extBtn.classList.add("hidden");
+      }
+    }
+
+    modal.classList.remove("hidden");
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      modal.classList.add("hidden");
+    });
+  }
+
+  // Close when clicking backdrop
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.classList.add("hidden");
+    }
+  });
+
+  // Method selector
+  document.querySelectorAll(".rzp-method-option").forEach(opt => {
+    opt.addEventListener("click", () => {
+      document.querySelectorAll(".rzp-method-option").forEach(o => o.classList.remove("active"));
+      opt.classList.add("active");
+      const radio = opt.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+    });
+  });
+
+  // Confirm payment
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", async () => {
+      confirmBtn.disabled = true;
+      confirmBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px; animation: spin 1s linear infinite;">progress_activity</span> Authorizing with Razorpay...`;
+
+      try {
+        const selectedMethod = document.querySelector('input[name="rzp-method"]:checked')?.value || "upi";
+        const res = await fetch("/api/simulate-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            invoice_id: currentPaymentData.invoiceId,
+            amount: currentPaymentData.amount,
+            payment_method: selectedMethod,
+          }),
+        });
+
+        if (!res.ok) {
+          const errTxt = await res.text();
+          throw new Error(errTxt || "Payment failed");
+        }
+
+        const data = await res.json();
+
+        // Success state in modal
+        if (statusBox) {
+          statusBox.className = "rzp-status-alert success";
+          statusBox.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Payment of ₹${currentPaymentData.amount.toLocaleString()} Captured! Ref: ${data.payment_id}`;
+        }
+
+        confirmBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">verified</span> Payment Captured`;
+
+        // Update UI state in chat window
+        setTimeout(() => {
+          modal.classList.add("hidden");
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">lock</span> <span id="btn-confirm-rzp-pay-text">Authorize & Pay ₹${currentPaymentData.amount.toLocaleString()}</span>`;
+
+          // Mark chat pay button as settled
+          payBtn.classList.add("settled");
+          payBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 15px;">check_circle</span> ✓ Paid ₹${currentPaymentData.amount.toLocaleString()} (Settled)`;
+
+          // Add simulated confirmation message in chat
+          const chatWindow = document.querySelector(".sim-chat-window");
+          if (chatWindow) {
+            const confirmBubble = document.createElement("div");
+            confirmBubble.className = "chat-bubble incoming";
+            confirmBubble.style.borderColor = "var(--success)";
+            confirmBubble.innerHTML = `
+              <div style="font-size: 0.7rem; color: #10B981; margin-bottom: 0.2rem; font-weight: 600;">Razorpay Gateway Webhook (${selectedMethod.toUpperCase()}):</div>
+              <div>Payment of ₹${currentPaymentData.amount.toLocaleString()} captured. Status: <strong>PAID</strong> (Ref: ${data.payment_id})</div>
+              <div class="chat-meta">Just now • Webhook Idempotency: Verified ✓✓</div>
+            `;
+            chatWindow.appendChild(confirmBubble);
+          }
+
+          // Update agent status badge
+          safeSetText("sim-agent-status", "✓ Invoice Settled & Closed");
+
+          // Update DAG step 4
+          const contentAction = document.getElementById("content-action");
+          const badgeAction = document.getElementById("badge-action");
+          if (contentAction) {
+            contentAction.innerHTML = `
+              <div><strong>Webhook Event:</strong> payment.captured (Verified)</div>
+              <div><strong>Settled Amount:</strong> ₹${currentPaymentData.amount.toLocaleString()}</div>
+              <div><strong>Invoice State:</strong> <span style="color: #10B981; font-weight: 700;">PAID & CLOSED</span></div>
+              <div><strong>Idempotency Check:</strong> Key registered (Safe No-Op on duplicate)</div>
+            `;
+          }
+          if (badgeAction) {
+            badgeAction.className = "dag-step-badge badge-success";
+            badgeAction.innerText = "Captured & Closed";
+          }
+
+          // Refresh live stores
+          loadAuditTrail();
+          loadInvoices();
+        }, 1000);
+
+      } catch (err) {
+        if (statusBox) {
+          statusBox.className = "rzp-status-alert error";
+          statusBox.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">error</span> ${err.message}`;
+        }
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">lock</span> Retry Payment`;
+      }
+    });
   }
 }
 

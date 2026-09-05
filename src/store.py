@@ -68,6 +68,11 @@ def update_invoice(invoice_id: str, **fields: Any) -> None:
         _invoices[invoice_id].update(fields)
 
 
+def get_all_invoices() -> list[dict[str, Any]]:
+    """Get all invoice records currently stored in memory."""
+    return list(_invoices.values())
+
+
 # --- Idempotency operations ---
 
 def make_idempotency_key(invoice_id: str, event_type: str, razorpay_event_id: str) -> str:

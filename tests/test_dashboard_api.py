@@ -123,3 +123,27 @@ def test_simulate_call_vague_input_routes_to_exception(client):
         assert response.status_code == 200
         data = response.json()
         assert data["routed_to"] == "exception_list"
+
+
+def test_simulate_payment_endpoint(client):
+    payload = {
+        "invoice_id": "INV-TEST-PAY-01",
+        "amount": 75000.0,
+        "payment_method": "upi",
+    }
+    response = client.post("/api/simulate-payment", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert data["invoice_id"] == "INV-TEST-PAY-01"
+    assert data["amount"] == 75000.0
+    assert data["new_status"] == "Paid"
+    assert "pay_sim_" in data["payment_id"]
+
+    # Verify that get_invoices reflects the paid invoice
+    inv_resp = client.get("/api/invoices")
+    assert inv_resp.status_code == 200
+    p2p_invs = inv_resp.json()["p2p_invoices"]
+    paid_inv = next((inv for inv in p2p_invs if inv["invoice_id"] == "INV-TEST-PAY-01"), None)
+    assert paid_inv is not None
+    assert paid_inv["status"] == "Paid"

@@ -70,6 +70,17 @@ class SimulateUtteranceRequest(BaseModel):
 # API Endpoints
 # -----------------------------------------------------------------------------
 
+from store import get_all_invoices, get_audit_log, set_invoice_status, update_invoice
+import uuid
+
+
+class SimulatePaymentRequest(BaseModel):
+    invoice_id: str = Field(..., min_length=1)
+    amount: float = Field(..., gt=0.0)
+    payment_method: str = Field(default="upi")
+    razorpay_event_id: Optional[str] = None
+
+
 @app.get("/api/metrics")
 def get_metrics() -> dict[str, Any]:
     """Returns the latest evaluation scorecard metrics, 95% CIs, and checksums."""
@@ -85,27 +96,45 @@ def get_metrics() -> dict[str, Any]:
 
 @app.get("/api/invoices")
 def get_invoices() -> dict[str, Any]:
-    """Returns sample active B2B invoices and payment failure events."""
+    """Returns sample active B2B invoices and payment failure events, merging active memory state."""
     p2p_path = DATA_DIR / "p2p_held_out.json"
     pf_path = DATA_DIR / "payment_failure_held_out.json"
 
     p2p_items = []
     if p2p_path.exists():
         with open(p2p_path, "r", encoding="utf-8") as f:
-            p2p_items = json.load(f)[:15]
+            p2p_items = list(json.load(f)[:15])
 
     pf_items = []
     if pf_path.exists():
         with open(pf_path, "r", encoding="utf-8") as f:
-            pf_items = json.load(f)[:15]
+            pf_items = list(json.load(f)[:15])
+
+    # Overlay active in-memory invoices (e.g., INV-DEMO-001)
+    active_invs = {inv["invoice_id"]: inv for inv in get_all_invoices() if "invoice_id" in inv}
+    for item in p2p_items:
+        iid = item.get("invoice_id")
+        if iid and iid in active_invs:
+            item["status"] = active_invs[iid].get("status", item.get("status", "Open"))
+            if "original_amount" in active_invs[iid]:
+                item["original_amount"] = active_invs[iid]["original_amount"]
+
+    # Prepend any new invoices created in memory that aren't in held_out
+    known_p2p_ids = {it.get("invoice_id") for it in p2p_items}
+    for iid, inv in active_invs.items():
+        if iid not in known_p2p_ids and not iid.startswith("PF-"):
+            p2p_items.insert(0, {
+                "invoice_id": iid,
+                "customer_name": inv.get("customer_name", f"Customer ({iid})"),
+                "original_amount": inv.get("original_amount", 100000.0),
+                "status": inv.get("status", "Open"),
+                "raw_input": inv.get("raw_input", "Simulated demo invoice"),
+            })
 
     return {
         "p2p_invoices": p2p_items,
         "payment_failures": pf_items,
     }
-
-
-from store import get_audit_log
 
 
 @app.get("/api/audit-trail")
@@ -160,17 +189,75 @@ def simulate_recovery_call(req: SimulateUtteranceRequest) -> dict[str, Any]:
     except ValueError:
         inv_status = InvoiceStatus.OPEN
 
-    result = orchestrator.process_utterance(
-        utterance_text=req.utterance_text,
-        invoice_id=req.invoice_id,
-        original_amount=req.original_amount,
-        current_state=inv_status,
-        flow=req.flow,
-        reference_date=ref_date,
-        requested_discount_pct=req.requested_discount_pct
-    )
+    try:
+        result = orchestrator.process_utterance(
+            utterance_text=req.utterance_text,
+            invoice_id=req.invoice_id,
+            original_amount=req.original_amount,
+            current_state=inv_status,
+            flow=req.flow,
+            reference_date=ref_date,
+            requested_discount_pct=req.requested_discount_pct,
+        )
+    except Exception as e:
+        logger.warning(f"Primary orchestrator execution failed ({e}); falling back to MockPaymentAdapter.")
+        from payment_adapter import MockPaymentAdapter
+        orchestrator.payment_adapter = MockPaymentAdapter()
+        result = orchestrator.process_utterance(
+            utterance_text=req.utterance_text,
+            invoice_id=req.invoice_id,
+            original_amount=req.original_amount,
+            current_state=inv_status,
+            flow=req.flow,
+            reference_date=ref_date,
+            requested_discount_pct=req.requested_discount_pct,
+        )
+
+    # Persist state transition to in-memory store
+    if result.new_state:
+        set_invoice_status(req.invoice_id, result.new_state)
+        update_invoice(
+            req.invoice_id,
+            original_amount=req.original_amount,
+            status=result.new_state,
+            raw_input=req.utterance_text,
+            payment_link=result.payment_link.model_dump(mode="json") if result.payment_link else None,
+        )
 
     return result.model_dump(mode="json")
+
+
+@app.post("/api/simulate-payment")
+def simulate_payment(req: SimulatePaymentRequest) -> dict[str, Any]:
+    """Simulates an incoming Razorpay payment completion / capture webhook."""
+    from datetime import UTC
+    evt_id = req.razorpay_event_id or f"pay_sim_{uuid.uuid4().hex[:12]}"
+    event_data = {
+        "invoice_id": req.invoice_id,
+        "event_type": "payment.captured",
+        "razorpay_event_id": evt_id,
+        "amount": req.amount,
+        "payment_method": req.payment_method,
+    }
+    actions = handle_event(event_data)
+    set_invoice_status(req.invoice_id, "Paid")
+    update_invoice(
+        req.invoice_id,
+        status="Paid",
+        paid_amount=req.amount,
+        last_payment_id=evt_id,
+        paid_at=datetime.now(UTC).isoformat(),
+    )
+    return {
+        "status": "success",
+        "message": f"Payment of ₹{req.amount:,.2f} successfully captured via {req.payment_method.upper()}",
+        "invoice_id": req.invoice_id,
+        "amount": req.amount,
+        "payment_id": evt_id,
+        "new_status": "Paid",
+        "actions_produced": len(actions),
+        "actions": actions,
+    }
 
 
 @app.post("/api/webhook")

@@ -514,10 +514,10 @@
                   <div id="sim-agent-reply">
                     Thanks for the update! Here is your secure Razorpay payment link for ₹150,000 (valid till Monday).
                   </div>
-                  <a href="#" target="_blank" class="chat-pay-btn-inline" id="sim-chat-pay-btn">
+                  <button type="button" class="chat-pay-btn-inline" id="sim-chat-pay-btn">
                     <span class="material-symbols-outlined" style="font-size: 15px;">credit_card</span>
                     <span id="sim-chat-pay-text">Pay ₹150,000 via Razorpay</span>
-                  </a>
+                  </button>
                   <div class="chat-meta">Sent via Razorpay WhatsApp Gateway ✓✓</div>
                 </div>
               </div>
@@ -690,6 +690,93 @@
         </span>
       </div>
     </footer>
+  </div>
+
+  <!-- RAZORPAY CHECKOUT SANDBOX MODAL -->
+  <div class="rzp-modal-backdrop hidden" id="rzp-checkout-modal">
+    <div class="rzp-modal-box">
+      <div class="rzp-modal-header">
+        <div class="rzp-brand-tag">
+          <span class="material-symbols-outlined rzp-icon">payments</span>
+          <div>
+            <div class="rzp-title">Razorpay Trusted Business</div>
+            <div class="rzp-sub">Test Sandbox • Secured with 256-bit Encryption</div>
+          </div>
+        </div>
+        <button class="rzp-close-btn" id="btn-close-rzp-modal" title="Close">&times;</button>
+      </div>
+
+      <div class="rzp-modal-body">
+        <div class="rzp-order-summary">
+          <div class="rzp-order-row">
+            <span class="rzp-label">Invoice ID:</span>
+            <span class="rzp-value" id="rzp-modal-invoice">INV-DEMO-001</span>
+          </div>
+          <div class="rzp-order-row">
+            <span class="rzp-label">Customer:</span>
+            <span class="rzp-value" id="rzp-modal-customer">Acme Corp Recovery</span>
+          </div>
+          <div class="rzp-order-divider"></div>
+          <div class="rzp-order-row total">
+            <span class="rzp-label">Total Payable:</span>
+            <span class="rzp-amount" id="rzp-modal-amount">₹100,000.00</span>
+          </div>
+        </div>
+
+        <div class="rzp-methods-section">
+          <div class="rzp-section-title">Select Payment Method (Simulation)</div>
+          <div class="rzp-methods-grid">
+            <label class="rzp-method-option active" data-method="upi">
+              <input type="radio" name="rzp-method" value="upi" checked>
+              <div class="rzp-method-content">
+                <span class="material-symbols-outlined">qr_code_2</span>
+                <div class="rzp-method-info">
+                  <strong>UPI / Instant QR</strong>
+                  <span>Google Pay, PhonePe, Paytm</span>
+                </div>
+              </div>
+            </label>
+            <label class="rzp-method-option" data-method="card">
+              <input type="radio" name="rzp-method" value="card">
+              <div class="rzp-method-content">
+                <span class="material-symbols-outlined">credit_card</span>
+                <div class="rzp-method-info">
+                  <strong>Debit / Credit Card</strong>
+                  <span>Visa, Mastercard, RuPay</span>
+                </div>
+              </div>
+            </label>
+            <label class="rzp-method-option" data-method="netbanking">
+              <input type="radio" name="rzp-method" value="netbanking">
+              <div class="rzp-method-content">
+                <span class="material-symbols-outlined">account_balance</span>
+                <div class="rzp-method-info">
+                  <strong>Netbanking</strong>
+                  <span>HDFC, ICICI, SBI, Axis</span>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="rzp-status-alert hidden" id="rzp-status-box"></div>
+
+        <div class="rzp-action-bar">
+          <button class="btn btn-rzp-pay" id="btn-confirm-rzp-pay">
+            <span class="material-symbols-outlined" style="font-size: 16px;">lock</span>
+            <span id="btn-confirm-rzp-pay-text">Authorize & Pay ₹100,000</span>
+          </button>
+          <a href="#" target="_blank" class="rzp-external-link hidden" id="rzp-external-url-btn">
+            Open Live Razorpay Link ↗
+          </a>
+        </div>
+      </div>
+
+      <div class="rzp-modal-footer">
+        <span class="material-symbols-outlined" style="font-size: 14px; color: #10B981;">verified_user</span>
+        <span>PCI-DSS Level 1 Certified • Live Webhook Verification Active</span>
+      </div>
+    </div>
   </div>
 
   <script src="/static/app.js"></script>
