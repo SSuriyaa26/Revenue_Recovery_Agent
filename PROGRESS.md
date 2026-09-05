@@ -52,7 +52,7 @@ python scripts/run_demo.py --auto --timed 1.0
 
 ---
 
-## 3. What Was Built & Verified Today
+## 3. What Was Built & Verified
 
 - **Batch Evaluation Harness (`src/evaluation_harness.py`, `scripts/evaluate_batch.py`)**:
   - Full evaluation across 70 held-out records + 24 adversarial records.
@@ -103,8 +103,6 @@ python scripts/run_demo.py --auto --timed 1.0
 > - **`src/policy_engine.py`**: Pure deterministic module. Must remain 100% free of network calls or LLM API calls.
 > - **`src/contracts/`**: Frozen interface contracts. Modifications require team confirmation.
 > - **`src/perception_gateway.py`**: Contains the adversarial routing logic. Needs review and validation against dev-set data before further tuning.
-
----
 
 ---
 
@@ -198,8 +196,7 @@ Hackathon submissions are scored across 4 core categories:
 4. **Code Quality & Documentation**: Clean architecture, high unit test coverage, auditable logs, and a clear design decisions/tradeoffs document.
 
 > [!IMPORTANT]
-> - **README.md**: Skeleton documentation work must start in parallel with Step 9 (not left to Day 7).
-> - **Zero Broken Code Rule**: *"Broken code disqualifies."* Prefer a smaller, 100% reliable, fully working scope over a larger, flaky implementation if Steps 9–10 hit unexpected external API friction.
+> - **Zero Broken Code Rule**: *"Broken code disqualifies."* Prefer a smaller, 100% reliable, fully working scope over a larger, flaky implementation.
 
 ---
 

@@ -91,7 +91,7 @@ This separation is the architectural answer to the most obvious skeptical questi
        └──────────────────────────────┘
 ```
 
-> **Note on `System Architecture.png`**: The [existing diagram](System%20Architecture.png) in the repo shows the spec's idealized dual-service architecture (Java/Spring Boot core, React frontend). The actual build is a **Python/FastAPI monolith** with vanilla HTML/JS/CSS. The diagram is useful for understanding the conceptual layer separation but does not reflect the implementation stack. It needs updating to match the built system.
+> **Note on `System Architecture.png`**: The [existing diagram](System%20Architecture.png) in the repo shows the spec's idealized dual-service architecture (Java/Spring Boot core, React frontend). The actual build is a **Python/FastAPI monolith** with vanilla HTML/JS/CSS. The diagram is retained for conceptual layer reference but does not reflect the implementation stack.
 
 ---
 
@@ -104,7 +104,7 @@ This separation is the architectural answer to the most obvious skeptical questi
 ### Setup
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/SSuriyaa26/Revenue_Recovery_Agent.git
 cd Revenue_Recovery_Agent
 
 python -m venv venv
