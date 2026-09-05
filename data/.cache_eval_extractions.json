@@ -449,5 +449,49 @@
       "extraction_notes": "Customer is demanding a 70% discount as a condition to pay immediately. This is a conditional negotiation/discount request rather than a firm payment commitment."
     },
     "model": "gemini-3.6-flash"
+  },
+  "44a8c1f58cf9069643641723bcbf38adfc30e340a495f76c64ce177049af8a01": {
+    "data": {
+      "committed_amount": 50000.0,
+      "split_pct": 50.0,
+      "committed_date": "2026-08-20",
+      "confidence": 0.95,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer promised 50% (₹50,000) now ('abhi' on reference date 2026-08-20) and the remaining 50% by 25 August 2026."
+    },
+    "model": "gemini-3.7-flash"
+  },
+  "bf86961e16aae66c00879407d008bf930b9a2836f017afe3bbdef897c2ebfaa2": {
+    "data": {
+      "committed_amount": 100000.0,
+      "split_pct": 50.0,
+      "committed_date": "2026-08-25",
+      "confidence": 0.94,
+      "language_detected": "hinglish",
+      "extraction_notes": "Deterministic offline extraction for rehearsal take"
+    },
+    "model": "mock-offline-v1"
+  },
+  "3dc735dd398b48070b980b9de460dfd3929a35db42da40cbcaa30599bc7b714c": {
+    "data": {
+      "committed_amount": 50000.0,
+      "split_pct": 50.0,
+      "committed_date": "2026-08-25",
+      "confidence": 0.94,
+      "language_detected": "hinglish",
+      "extraction_notes": "Deterministic offline extraction for rehearsal take"
+    },
+    "model": "mock-offline-v1"
+  },
+  "ffb4ebb16c3a2ad78abec2eff0fe5f05ee8d8558c876a80fa597b19691fc5b93": {
+    "data": {
+      "committed_amount": 50000.0,
+      "split_pct": null,
+      "committed_date": "2026-09-07",
+      "confidence": 0.98,
+      "language_detected": "hinglish",
+      "extraction_notes": "Customer explicitly committed to pay INR 50,000 by upcoming Monday (2026-09-07) relative to Friday 2026-09-04."
+    },
+    "model": "gemini-3.7-flash"
   }
 }

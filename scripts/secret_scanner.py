@@ -89,5 +89,66 @@ def scan_staged_files() -> int:
 
     return 0
 
+import os
+
+
+def scan_all_repo_files() -> int:
+    """Scan all tracked and relevant repo files for secrets quickly using pruned directory walk."""
+    repo_root = Path(__file__).resolve().parent.parent
+    secrets_found = []
+
+    ignore_dirs = {".git", ".pytest_cache", "venv", ".venv", "__pycache__", "node_modules", "Speech_test", "TEST_UI", "scratch"}
+    ignore_files = {".gitignore", "secret_scanner.py", ".env"}
+
+    for root, dirs, files in os.walk(repo_root):
+        # Prune ignored directories in-place so os.walk does not descend into them
+        dirs[:] = [d for d in dirs if d not in ignore_dirs]
+
+        for file_name in files:
+            if file_name in ignore_files or "pre-commit" in file_name:
+                continue
+
+            p = Path(root) / file_name
+            if p.suffix.lower() in SKIP_EXTENSIONS:
+                continue
+
+            try:
+                with open(p, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+            except Exception:
+                continue
+
+            rel_path = p.relative_to(repo_root)
+            for line_num, line in enumerate(content.splitlines(), 1):
+                if is_allowlisted(line):
+                    continue
+
+                for name, pattern in PATTERNS:
+                    if re.search(pattern, line):
+                        snippet = line.strip()
+                        if len(snippet) > 50:
+                            snippet = snippet[:47] + "..."
+                        secrets_found.append((str(rel_path), line_num, name, snippet))
+                        break
+
+    if secrets_found:
+        print("\n" + "=" * 65)
+        print("  [ALERT] POTENTIAL SECRET CREDENTIAL DETECTED IN REPO!")
+        print("=" * 65)
+        for filepath, line_num, name, snippet in secrets_found:
+            print(f"  File:   {filepath}")
+            print(f"  Line:   {line_num}")
+            print(f"  Type:   {name}")
+            print(f"  Snippet: {snippet}")
+            print("-" * 65)
+        print("Please remove real credentials before committing or publishing.\n")
+        return 1
+
+    print("Secret Scan Clean: Zero unmasked secrets found across repository.")
+    return 0
+
+
 if __name__ == "__main__":
+    if "--all" in sys.argv or "-a" in sys.argv:
+        sys.exit(scan_all_repo_files())
     sys.exit(scan_staged_files())

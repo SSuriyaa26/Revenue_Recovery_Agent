@@ -132,7 +132,10 @@ class CommitmentExtractor:
         self.use_cache = use_cache
         self.temperature = temperature
 
-        if self.provider == "groq":
+        if self.provider == "mock":
+            self.model_name = "mock-offline-v1"
+            self.fallback_models = []
+        elif self.provider == "groq":
             self.api_key = api_key or os.getenv("GROQ_API_KEY")
             self.model_name = model_name or os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
             self.fallback_models = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]
@@ -271,6 +274,44 @@ class CommitmentExtractor:
 
         raise RuntimeError(f"All Gemini extraction model calls failed: {last_error}")
 
+    def _call_mock(
+        self,
+        transcript: str,
+        reference_date: date,
+        original_amount: Optional[float] = None,
+    ) -> tuple[dict[str, Any], str]:
+        """Deterministic offline mock extraction for fast rehearsal runs without quota usage."""
+        t_lower = transcript.lower()
+        split_pct = 50.0 if ("50%" in t_lower or "half" in t_lower or "split" in t_lower) else None
+
+        amt = None
+        if "1,00,000" in transcript or "100000" in transcript or "1 lakh" in t_lower:
+            amt = 100000.0
+        elif "50000" in transcript or "50 hazaar" in t_lower or "50 thousand" in t_lower:
+            amt = 50000.0
+        elif original_amount and split_pct:
+            amt = round(original_amount * (split_pct / 100.0), 2)
+
+        committed_date = "2026-08-25"
+        if "kal" in t_lower or "tomorrow" in t_lower:
+            from datetime import timedelta
+            committed_date = (reference_date + timedelta(days=1)).isoformat()
+
+        conf = 0.94
+        if any(w in t_lower for w in ["dekh ke bataunga", "kuch dino", "pata nahi", "baad me", "baad mein"]):
+            conf = 0.40
+            committed_date = None
+            amt = None
+
+        return {
+            "committed_amount": amt,
+            "split_pct": split_pct,
+            "committed_date": committed_date,
+            "confidence": conf,
+            "language_detected": "hinglish",
+            "extraction_notes": "Deterministic offline extraction for rehearsal take",
+        }, "mock-offline-v1"
+
     def _call_llm(
         self,
         transcript: str,
@@ -284,7 +325,9 @@ class CommitmentExtractor:
             cached_val = self._cache[cache_key]
             return cached_val["data"], cached_val["model"]
 
-        if self.provider == "groq":
+        if self.provider == "mock":
+            data, model_used = self._call_mock(transcript, reference_date, original_amount)
+        elif self.provider == "groq":
             data, model_used = self._call_groq(transcript, reference_date, original_amount)
         else:
             data, model_used = self._call_gemini(transcript, reference_date, original_amount)

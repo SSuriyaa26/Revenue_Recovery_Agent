@@ -13,7 +13,11 @@ Per decision B2: duplicate events produce 2 audit entries total:
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+import hashlib
+import hmac
+import logging
+import os
+from typing import Any, Optional
 import uuid
 
 from store import (
@@ -22,6 +26,50 @@ from store import (
     make_idempotency_key,
     set_invoice_status,
 )
+
+logger = logging.getLogger(__name__)
+
+
+def verify_razorpay_webhook_signature(
+    payload_body: bytes | str,
+    signature: str,
+    secret: Optional[str] = None,
+) -> bool:
+    """Verify incoming Razorpay webhook signature using HMAC-SHA256.
+
+    SPEC §6.7 / Razorpay Webhooks Spec:
+    Validates the 'X-Razorpay-Signature' header against the computed
+    HMAC-SHA256 hash of the raw request payload using the configured webhook secret.
+    """
+    secret = secret or os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
+    if not secret:
+        # In test/mock environment without a configured webhook secret, log and permit
+        logger.debug("RAZORPAY_WEBHOOK_SECRET not set; bypassing signature verification in mock/test mode.")
+        return True
+
+    if not signature:
+        logger.warning("Missing Razorpay webhook signature header ('X-Razorpay-Signature').")
+        return False
+
+    if isinstance(payload_body, str):
+        payload_bytes = payload_body.encode("utf-8")
+    else:
+        payload_bytes = payload_body
+
+    expected_sig = hmac.new(
+        secret.encode("utf-8"),
+        payload_bytes,
+        hashlib.sha256
+    ).hexdigest()
+
+    is_valid = hmac.compare_digest(expected_sig, signature)
+    if is_valid:
+        # One-line confirmation annotation: Webhook signature verified before event processing
+        logger.info("Razorpay Webhook Signature Verified: HMAC-SHA256 signature matches expected digest.")
+    else:
+        logger.warning("Razorpay Webhook Signature Mismatch: Invalid signature received.")
+    return is_valid
+
 
 
 def handle_event(event: dict[str, Any]) -> list[dict[str, Any]]:

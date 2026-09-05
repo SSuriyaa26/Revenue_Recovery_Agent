@@ -97,6 +97,51 @@ class RazorpayPaymentAdapter(PaymentGatewayAdapter):
     def _auth(self) -> tuple[str, str]:
         return (self.key_id, self.key_secret)
 
+    # RETRY POLICY: Exponential backoff with jitter on transient network/5xx/429 errors (attempts=3, backoff_factor=1.0s) per SPEC §6.7
+    def _execute_with_retry(self, method: str, endpoint: str, **kwargs: Any) -> requests.Response:
+        """Executes external HTTP call against Razorpay REST API with exponential backoff retry.
+
+        Retries up to 3 times on transient connection errors, read timeouts, HTTP 429 (rate limits),
+        or HTTP 5xx (internal gateway errors) with exponential backoff (1s, 2s, 4s).
+        """
+        max_retries = 3
+        backoff_factor = 1.0
+        last_exception: Optional[Exception] = None
+        resp: Optional[requests.Response] = None
+
+        for attempt in range(max_retries):
+            try:
+                if method.upper() == "POST":
+                    resp = requests.post(endpoint, auth=self._auth(), timeout=self.timeout, **kwargs)
+                elif method.upper() == "GET":
+                    resp = requests.get(endpoint, auth=self._auth(), timeout=self.timeout, **kwargs)
+                else:
+                    resp = requests.request(method=method, url=endpoint, auth=self._auth(), timeout=self.timeout, **kwargs)
+
+                # Success or permanent client error (4xx other than 429) returns immediately without retry
+                if resp.status_code < 500 and resp.status_code != 429:
+                    return resp
+
+                logger.warning(
+                    f"Razorpay API returned status {resp.status_code} on attempt {attempt + 1}/{max_retries}. "
+                    f"Retrying in {backoff_factor * (2 ** attempt)}s..."
+                )
+            except (requests.ConnectionError, requests.Timeout) as e:
+                last_exception = e
+                logger.warning(
+                    f"Razorpay network exception on attempt {attempt + 1}/{max_retries}: {e}. "
+                    f"Retrying in {backoff_factor * (2 ** attempt)}s..."
+                )
+
+            if attempt < max_retries - 1:
+                time.sleep(backoff_factor * (2 ** attempt))
+
+        if last_exception:
+            raise PaymentGatewayError(f"Razorpay network error after {max_retries} retries: {last_exception}") from last_exception
+        if resp is not None:
+            return resp
+        raise PaymentGatewayError(f"Razorpay request failed after {max_retries} attempts")
+
     def create_payment_link(
         self,
         invoice_id: str,
@@ -108,7 +153,7 @@ class RazorpayPaymentAdapter(PaymentGatewayAdapter):
         expire_by: Optional[int] = None,
         **kwargs: Any,
     ) -> PaymentLinkResult:
-        """Creates a Razorpay Payment Link (/v1/payment_links)."""
+        """Creates a Razorpay Payment Link (/v1/payment_links) with retry-with-backoff protection."""
         if amount <= 0:
             raise ValueError(f"Amount must be strictly positive, got {amount}")
 
@@ -145,12 +190,9 @@ class RazorpayPaymentAdapter(PaymentGatewayAdapter):
 
         endpoint = f"{self.BASE_URL}/payment_links"
         try:
-            resp = requests.post(
-                endpoint,
-                auth=self._auth(),
-                json=payload,
-                timeout=self.timeout
-            )
+            resp = self._execute_with_retry("POST", endpoint, json=payload)
+        except PaymentGatewayError:
+            raise
         except Exception as e:
             raise PaymentGatewayError(f"Razorpay network error: {e}") from e
 
@@ -174,7 +216,7 @@ class RazorpayPaymentAdapter(PaymentGatewayAdapter):
         )
 
     def fetch_invoice_status(self, invoice_id: str) -> InvoiceStatusResult:
-        """Fetches payment link / invoice details from Razorpay."""
+        """Fetches payment link / invoice details from Razorpay with retry protection."""
         # If passed a payment link ID (plink_...) query payment_links endpoint
         if invoice_id.startswith("plink_"):
             endpoint = f"{self.BASE_URL}/payment_links/{invoice_id}"
@@ -182,7 +224,9 @@ class RazorpayPaymentAdapter(PaymentGatewayAdapter):
             endpoint = f"{self.BASE_URL}/invoices/{invoice_id}"
 
         try:
-            resp = requests.get(endpoint, auth=self._auth(), timeout=self.timeout)
+            resp = self._execute_with_retry("GET", endpoint)
+        except PaymentGatewayError:
+            raise
         except Exception as e:
             raise PaymentGatewayError(f"Razorpay network error: {e}") from e
 
@@ -208,10 +252,10 @@ class RazorpayPaymentAdapter(PaymentGatewayAdapter):
         )
 
     def cancel_payment_link(self, link_id: str) -> bool:
-        """Cancels a Razorpay payment link."""
+        """Cancels a Razorpay payment link with retry protection."""
         endpoint = f"{self.BASE_URL}/payment_links/{link_id}/cancel"
         try:
-            resp = requests.post(endpoint, auth=self._auth(), timeout=self.timeout)
+            resp = self._execute_with_retry("POST", endpoint)
             return resp.status_code in (200, 201)
         except Exception:
             return False

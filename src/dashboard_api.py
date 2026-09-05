@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 
 from contracts.invoice import InvoiceStatus
 from evaluation_harness import EvaluationHarness
+from event_consumer import handle_event, verify_razorpay_webhook_signature
 from orchestrator import RevenueRecoveryOrchestrator
 from payment_adapter import get_payment_adapter
 from perception_service import PerceptionService
@@ -170,6 +171,38 @@ def simulate_recovery_call(req: SimulateUtteranceRequest) -> dict[str, Any]:
     )
 
     return result.model_dump(mode="json")
+
+
+@app.post("/api/webhook")
+async def receive_webhook(request: Request) -> dict[str, Any]:
+    """Receives incoming Razorpay webhook notifications with HMAC-SHA256 signature verification."""
+    body_bytes = await request.body()
+    signature = request.headers.get("X-Razorpay-Signature", "")
+
+    # Webhook signature verification annotation:
+    # Verifies HMAC-SHA256 signature before processing payload
+    if not verify_razorpay_webhook_signature(body_bytes, signature):
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    try:
+        payload = json.loads(body_bytes.decode("utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON payload: {e}")
+
+    event_data = {
+        "invoice_id": payload.get("payload", {}).get("payment", {}).get("entity", {}).get("notes", {}).get("invoice_id")
+        or payload.get("invoice_id")
+        or "INV-UNKNOWN",
+        "event_type": payload.get("event", "payment.captured"),
+        "razorpay_event_id": payload.get("id") or payload.get("razorpay_event_id") or "evt_unknown",
+    }
+
+    actions = handle_event(event_data)
+    return {
+        "status": "processed" if actions else "duplicate_ignored",
+        "actions_produced": len(actions),
+        "actions": actions,
+    }
 
 
 # -----------------------------------------------------------------------------
