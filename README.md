@@ -190,6 +190,22 @@ Date parsing (e.g., "Wednesday tak" → next Wednesday) has been tested against 
 | **Tests** | pytest (67 tests: unit, integration, adversarial, idempotency) |
 | **Evaluation** | Custom batch harness with SHA-256 dataset checksums, paired bootstrap CIs, cost-weighted error rates |
 
+### Why Python Instead of Java?
+
+The [original spec](revenue-recovery-spec.md) calls for a Java/Spring Boot core service with a separate Python/FastAPI perception microservice. We deliberately built the entire system as a **Python/FastAPI monolith** instead. Here's why:
+
+1. **AI-native ecosystem fit**: The core value of this system is Hinglish speech → structured intent extraction → policy-gated recovery. Every external AI dependency — Gemini (`google-genai`), Groq (`groq`), Sarvam ASR, Pydantic schema validation — ships Python-first SDKs. Wrapping these behind a Java REST layer would add an entire serialization/deserialization boundary with zero business value, just plumbing.
+
+2. **Hackathon velocity over enterprise ceremony**: Spring Boot's annotation-driven DI, DTO mapping, and build toolchain (`Maven`/`Gradle` → JAR → JVM startup) optimizes for long-lived production services. For a 7-day buildathon with a single developer, FastAPI's zero-boilerplate route declarations (`@app.get`, `@app.post`) and instant `uvicorn --reload` iteration loop compress the feedback cycle from minutes to seconds.
+
+3. **The spec's split was solving the wrong problem for this scope**: The dual-service architecture (Java core + Python perception) exists to isolate non-deterministic LLM calls from deterministic business logic at the *deployment* boundary. We achieve the same isolation at the *module* boundary — `src/policy_engine.py` is pure-function, zero-network, zero-LLM, verified by unit tests that mock-patch `socket.socket`. The architectural safety guarantee is identical; the service boundary is just unnecessary at this scale.
+
+4. **Pydantic v2 as the type safety substitute**: Java's compile-time type checking is its main advantage over Python for financial logic. Pydantic v2's runtime validation across all 8 contract schemas (`src/contracts/`) provides equivalent guarantees — every field is typed, constrained, and validated at ingestion. The Perception Gateway rejects malformed payloads before they reach any business logic, exactly as a Java DTO validator would.
+
+5. **Single-process testability**: 67 tests run in ~14 seconds with `pytest` against a single process. No Docker Compose, no inter-service HTTP mocking, no port conflicts. The entire system is testable from a cold `git clone` with just `pip install -r requirements.txt`.
+
+> **Bottom line**: Python was chosen because this project's value is in its AI perception pipeline and evaluation rigor, not in its HTTP framework. The deterministic safety guarantees that Java would provide at the type level are achieved through Pydantic contracts, pure-function module isolation, and a 67-test suite that enforces them.
+
 ---
 
 ## Repository Structure
