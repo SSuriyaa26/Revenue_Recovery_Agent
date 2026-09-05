@@ -29,69 +29,16 @@ This separation is the architectural answer to the most obvious skeptical questi
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         INPUT LAYER                                │
-│   Voice Note (.m4a/.wav)  │  Text Transcript  │  Webhook Event     │
-└──────────────┬────────────┴────────┬──────────┴────────┬───────────┘
-               │                     │                   │
-       ┌───────▼────────┐    ┌───────▼────────┐   ┌──────▼──────────┐
-       │   ASR Adapter   │    │  (text bypass) │   │ Event Consumer  │
-       │ ┌─────────────┐ │    │                │   │ (idempotent,    │
-       │ │Sarvam Saaras│ │    │                │   │  composite-key  │
-       │ │  v3 (live)  │ │    │                │   │  deduplication) │
-       │ └─────────────┘ │    │                │   └──────┬──────────┘
-       └───────┬─────────┘    └───────┬────────┘          │
-               │                      │                   │
-       ┌───────▼──────────────────────▼──┐                │
-       │  🤖 Commitment Extractor (LLM)  │                │
-       │  Gemini 3.7 Flash / Groq        │                │
-       │  (temperature=0.0, structured   │                │
-       │   JSON output, with fallback)   │                │
-       └───────────────┬─────────────────┘                │
-                       │                                  │
-       ┌───────────────▼──────────────┐                   │
-       │  Perception Gateway          │                   │
-       │  (Pydantic validation,       │                   │
-       │   injection filtering,       │                   │
-       │   confidence threshold)      │                   │
-       └───────────────┬──────────────┘                   │
-                       │                                  │
-       ════════════════╪══════════════════════════════════╪══════════
-        LLM-driven ↑   │   ↓ Deterministic from here     │
-       ════════════════╪══════════════════════════════════╪══════════
-                       │                                  │
-       ┌───────────────▼──────────────────────────────────▼──┐
-       │           Deterministic Policy Engine               │
-       │  • Discount caps (30% P2P / 20% PF)                │
-       │  • Retry caps (max 3 attempts)                      │
-       │  • Escalation stop (2 broken promises → human)      │
-       │  • Zero network calls, zero LLM calls               │
-       └───────────────┬────────────────────────────────────-┘
-                       │
-       ┌───────────────▼──────────────┐
-       │      State Machine           │
-       │  (formal lifecycle guards,   │
-       │   IllegalTransitionError)    │
-       └───────────────┬──────────────┘
-                       │
-       ┌───────────────▼──────────────┐
-       │  Payment Adapter (Razorpay)  │
-       │  • Payment link creation     │
-       │  • Invoice status lookup     │
-       │  • Amount → paise conversion │
-       │  • Test-mode sandbox (live)  │
-       └───────────────┬──────────────┘
-                       │
-       ┌───────────────▼──────────────┐
-       │     Audit Logger             │
-       │  (append-only, typed         │
-       │   outcomes, every action     │
-       │   + trigger + rule logged)   │
-       └──────────────────────────────┘
-```
+![AI Revenue Recovery Agent — System Architecture (as built)](System%20Architecture%20%28Built%29.png)
 
-> **Note on `System Architecture.png`**: The [existing diagram](System%20Architecture.png) in the repo shows the spec's idealized dual-service architecture (Java/Spring Boot core, React frontend). The actual build is a **Python/FastAPI monolith** with vanilla HTML/JS/CSS. The diagram is retained for conceptual layer reference but does not reflect the implementation stack.
+> **Key architectural boundary**: Everything above the "LLM boundary" line is non-deterministic (ASR, LLM extraction). Everything below is **pure deterministic** — zero network calls, zero LLM calls, fully unit-testable. This is the system's core safety claim.
+
+<details>
+<summary>Original spec diagram (conceptual reference — does not match implementation stack)</summary>
+
+The [original spec diagram](System%20Architecture.png) shows the idealized dual-service architecture (Java/Spring Boot core, React frontend, normalized SQL). The actual build is a **Python/FastAPI monolith** with vanilla HTML/JS/CSS and in-memory state. Retained for conceptual layer comparison only.
+
+</details>
 
 ---
 
@@ -227,10 +174,6 @@ The 42.8% exception rate reflects defensive policy bounding and realistic unreco
 ### 2. `committed_date` Parsing on Real Speech
 
 Date parsing (e.g., "Wednesday tak" → next Wednesday) has been tested against TTS and audio test fixtures. Extreme speaker pacing and disfluencies on complex multi-clause sentences may produce varying ASR transcripts that require clarification.
-
-### 3. `System Architecture.png` Diagram Scope
-
-The diagram shows the spec's idealized conceptual layers. The actual production-ready implementation is a streamlined Python/FastAPI backend with a vanilla HTML/JS/CSS frontend.
 
 ---
 
